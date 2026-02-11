@@ -1,5 +1,5 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
 }
 
 datasource db {
@@ -42,6 +42,7 @@ model Product {
   available   Boolean  @default(true)
   categoryId  Int
   category    Category @relation(fields: [categoryId], references: [id])
+  orderItems  OrderItem[]
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }

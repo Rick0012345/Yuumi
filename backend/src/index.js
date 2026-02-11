@@ -8,9 +8,27 @@ const prisma = new PrismaClient();
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
+const DEFAULT_ADMIN_EMAIL = process.env.DEFAULT_ADMIN_EMAIL || 'admin@lanchonete.com';
+const DEFAULT_ADMIN_PASSWORD = process.env.DEFAULT_ADMIN_PASSWORD || 'admin123';
+const DEFAULT_ADMIN_NAME = process.env.DEFAULT_ADMIN_NAME || 'Administrador';
 
 app.use(cors());
 app.use(express.json());
+
+const ensureDefaultAdmin = async () => {
+  const existingUser = await prisma.user.findUnique({ where: { email: DEFAULT_ADMIN_EMAIL } });
+  if (existingUser) return;
+
+  const hashedPassword = await bcrypt.hash(DEFAULT_ADMIN_PASSWORD, 10);
+  await prisma.user.create({
+    data: {
+      email: DEFAULT_ADMIN_EMAIL,
+      password: hashedPassword,
+      name: DEFAULT_ADMIN_NAME,
+      role: 'ADMIN',
+    },
+  });
+};
 
 // Middleware de Autenticação
 const authenticateToken = (req, res, next) => {
@@ -120,6 +138,16 @@ app.get('/api/dashboard/stats', authenticateToken, (req, res) => {
     });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await ensureDefaultAdmin();
+  } catch (error) {
+    console.error(error);
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+};
+
+startServer();
