@@ -1,0 +1,226 @@
+import { useEffect, useState } from 'react';
+import api from '../api';
+import { Search, Filter, RefreshCw, Eye, Truck, CheckCircle, Clock } from 'lucide-react';
+
+export default function Orders() {
+  const [orders, setOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('ALL');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    fetchOrders();
+
+    const intervalId = setInterval(() => {
+      fetchOrders(false); // Silent update
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  async function fetchOrders(showLoading = true) {
+    if (showLoading) setLoading(true);
+    try {
+      const response = await api.get('/orders');
+      setOrders(response.data || []);
+    } catch (error) {
+      console.error('Erro ao buscar pedidos:', error);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  }
+
+  async function updateStatus(id, newStatus) {
+    try {
+      await api.patch(`/orders/${id}/status`, { status: newStatus });
+      fetchOrders(false); // Refresh list immediately
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error);
+      alert('Não foi possível atualizar o status.');
+    }
+  }
+
+  const filteredOrders = orders.filter(order => {
+    const matchesFilter = filter === 'ALL' || order.status === filter;
+    const matchesSearch = 
+      order.id.toString().includes(searchTerm) || 
+      (order.customer_name && order.customer_name.toLowerCase().includes(searchTerm.toLowerCase()));
+    return matchesFilter && matchesSearch;
+  });
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'PENDING': return 'bg-amber-100 text-amber-700 border-amber-200';
+      case 'PREPARING': return 'bg-blue-100 text-blue-700 border-blue-200';
+      case 'READY': return 'bg-indigo-100 text-indigo-700 border-indigo-200';
+      case 'DELIVERING': return 'bg-purple-100 text-purple-700 border-purple-200';
+      case 'COMPLETED': return 'bg-emerald-100 text-emerald-700 border-emerald-200';
+      case 'CANCELLED': return 'bg-red-100 text-red-700 border-red-200';
+      default: return 'bg-slate-100 text-slate-700 border-slate-200';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+        case 'PENDING': return 'Pendente';
+        case 'PREPARING': return 'Preparando';
+        case 'READY': return 'Pronto';
+        case 'DELIVERING': return 'Em Entrega';
+        case 'COMPLETED': return 'Concluído';
+        case 'CANCELLED': return 'Cancelado';
+        default: return status;
+      }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800">Gerenciamento de Pedidos</h1>
+          <p className="text-slate-500 mt-1">Acompanhe e atualize os pedidos em tempo real</p>
+        </div>
+        <button 
+          onClick={() => fetchOrders(true)} 
+          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-lg text-slate-600 hover:bg-slate-50 transition-colors"
+        >
+          <RefreshCw size={18} />
+          <span>Atualizar</span>
+        </button>
+      </div>
+
+      <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-100 flex flex-col md:flex-row gap-4 justify-between">
+        <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0">
+          {['ALL', 'PENDING', 'PREPARING', 'READY', 'DELIVERING', 'COMPLETED'].map((status) => (
+            <button
+              key={status}
+              onClick={() => setFilter(status)}
+              className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
+                filter === status 
+                  ? 'bg-slate-800 text-white' 
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {status === 'ALL' ? 'Todos' : getStatusLabel(status)}
+            </button>
+          ))}
+        </div>
+
+        <div className="relative w-full md:w-64">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+          <input
+            type="text"
+            placeholder="Buscar por ID ou Cliente..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        {loading && orders.length === 0 ? (
+          <div className="p-12 text-center text-slate-500">Carregando pedidos...</div>
+        ) : filteredOrders.length === 0 ? (
+          <div className="p-12 text-center text-slate-500">Nenhum pedido encontrado.</div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-slate-50 border-b border-slate-100">
+                <tr>
+                  <th className="px-6 py-4 font-semibold text-slate-600">ID</th>
+                  <th className="px-6 py-4 font-semibold text-slate-600">Cliente</th>
+                  <th className="px-6 py-4 font-semibold text-slate-600">Itens</th>
+                  <th className="px-6 py-4 font-semibold text-slate-600">Total</th>
+                  <th className="px-6 py-4 font-semibold text-slate-600">Status</th>
+                  <th className="px-6 py-4 font-semibold text-slate-600">Data</th>
+                  <th className="px-6 py-4 font-semibold text-slate-600 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {filteredOrders.map((order) => (
+                  <tr key={order.id} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4 font-medium text-slate-900">#{order.id}</td>
+                    <td className="px-6 py-4 text-slate-600">{order.customer_name || 'Anônimo'}</td>
+                    <td className="px-6 py-4 text-slate-600">
+                      {order.items?.length > 0 ? (
+                        <div className="flex flex-col gap-1">
+                          {order.items.map((item, idx) => (
+                            <span key={idx} className="text-sm">
+                              {item.quantity}x {item.product?.name || 'Produto'}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 italic">Sem itens</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 font-medium text-emerald-600">
+                      R$ {Number(order.total).toFixed(2)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(order.status)}`}>
+                        {getStatusLabel(order.status)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-slate-500">
+                      {new Date(order.created_at).toLocaleString('pt-BR')}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        {order.status === 'PENDING' && (
+                          <button 
+                            onClick={() => updateStatus(order.id, 'PREPARING')}
+                            className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg tooltip"
+                            title="Iniciar Preparo"
+                          >
+                            <Clock size={18} />
+                          </button>
+                        )}
+                        {order.status === 'PREPARING' && (
+                          <button 
+                            onClick={() => updateStatus(order.id, 'READY')}
+                            className="p-2 text-indigo-600 hover:bg-indigo-50 rounded-lg"
+                            title="Marcar como Pronto"
+                          >
+                            <CheckCircle size={18} />
+                          </button>
+                        )}
+                        {order.status === 'READY' && (
+                          <button 
+                            onClick={() => updateStatus(order.id, 'DELIVERING')}
+                            className="p-2 text-purple-600 hover:bg-purple-50 rounded-lg"
+                            title="Enviar para Entrega"
+                          >
+                            <Truck size={18} />
+                          </button>
+                        )}
+                        {order.status === 'DELIVERING' && (
+                          <button 
+                            onClick={() => updateStatus(order.id, 'COMPLETED')}
+                            className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg"
+                            title="Finalizar Pedido"
+                          >
+                            <CheckCircle size={18} />
+                          </button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      {selectedOrder && (
+        <OrderDetailsModal 
+          order={selectedOrder} 
+          onClose={() => setSelectedOrder(null)} 
+          onUpdateStatus={updateStatus}
+        />
+      )}
+    </div>
+  );
+}

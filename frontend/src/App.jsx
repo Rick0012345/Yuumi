@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
+import Orders from './pages/Orders';
 import Users from './pages/Users';
 
 function App() {
@@ -13,7 +14,7 @@ function App() {
       <Route element={<Layout />}>
         <Route element={<ProtectedRoute />}>
           <Route path="/" element={<Dashboard />} />
-          <Route path="/pedidos" element={<div className="text-slate-500">Página de Pedidos em construção</div>} />
+          <Route path="/pedidos" element={<Orders />} />
           <Route path="/cardapio" element={<div className="text-slate-500">Página de Cardápio em construção</div>} />
           <Route path="/config" element={<div className="text-slate-500">Configurações em construção</div>} />
         </Route>

@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import api from '../api';
 import { DollarSign, ShoppingBag, Truck, Users } from 'lucide-react';
+import OrderDetailsModal from '../components/OrderDetailsModal';
 
 const StatCard = ({ title, value, icon, color }) => (
   <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
@@ -15,17 +16,42 @@ const StatCard = ({ title, value, icon, color }) => (
 );
 
 export default function Dashboard() {
-  const [stats, setStats] = useState({
-    totalOrders: 0,
-    totalRevenue: 0,
-    pendingOrders: 0,
-    activeDrivers: 0
-  });
+  const [orders, setOrders] = useState([]);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const stats = useMemo(() => {
+    const total = orders.length;
+    const revenue = orders.reduce((acc, order) => acc + (Number(order.total) || 0), 0);
+    const pending = orders.filter(o => o.status === 'PENDING').length;
+    return {
+      totalOrders: total,
+      totalRevenue: revenue,
+      pendingOrders: pending,
+      activeDrivers: 3
+    };
+  }, [orders]);
+
+  async function fetchOrders() {
+    try {
+      const response = await api.get('/orders');
+      setOrders(response.data || []);
+    } catch (error) {
+      console.error('Erro ao buscar pedidos:', error);
+    }
+  }
 
   useEffect(() => {
-    api.get('/dashboard/stats')
-      .then(res => setStats(res.data))
-      .catch(err => console.error(err));
+    const initialFetch = setTimeout(() => {
+      fetchOrders();
+    }, 0);
+
+    const intervalId = setInterval(() => {
+      fetchOrders();
+    }, 5000);
+
+    return () => {
+      clearInterval(intervalId);
+      clearTimeout(initialFetch);
+    };
   }, []);
 
   return (
@@ -58,9 +84,61 @@ export default function Dashboard() {
       </div>
 
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-        <h3 className="text-lg font-bold text-slate-800 mb-4">Visão Geral</h3>
-        <p className="text-slate-500">Bem-vindo ao painel administrativo da Yummi Lanchonete.</p>
+        <h3 className="text-lg font-bold text-slate-800 mb-4">Visão Geral - Últimos Pedidos (Atualização Automática)</h3>
+        {orders.length === 0 ? (
+          <p className="text-slate-500">Nenhum pedido registrado ainda.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-slate-100">
+                  <th className="pb-3 font-medium text-slate-500">ID</th>
+                  <th className="pb-3 font-medium text-slate-500">Cliente</th>
+                  <th className="pb-3 font-medium text-slate-500">Total</th>
+                  <th className="pb-3 font-medium text-slate-500">Status</th>
+                  <th className="pb-3 font-medium text-slate-500">Data</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <tr 
+                    key={order.id} 
+                    className="border-b border-slate-50 last:border-0 hover:bg-slate-50 cursor-pointer transition-colors"
+                    onClick={() => setSelectedOrder(order)}
+                  >
+                    <td className="py-3 text-slate-800">#{order.id}</td>
+                    <td className="py-3 text-slate-800">{order.customer_name || 'Cliente Anônimo'}</td>
+                    <td className="py-3 text-emerald-600 font-medium">R$ {Number(order.total).toFixed(2)}</td>
+                    <td className="py-3">
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        order.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 
+                        order.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : 
+                        'bg-slate-100 text-slate-700'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="py-3 text-slate-500 text-sm">
+                      {new Date(order.created_at).toLocaleString('pt-BR')}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
+      
+      {selectedOrder && (
+        <OrderDetailsModal 
+          order={selectedOrder} 
+          onClose={() => setSelectedOrder(null)} 
+          onUpdateStatus={(id, status) => {
+             setOrders(prev => prev.map(o => o.id === id ? { ...o, status } : o));
+             api.patch(`/orders/${id}/status`, { status });
+          }}
+        />
+      )}
     </div>
   );
 }

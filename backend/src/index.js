@@ -96,8 +96,16 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.get('/api/auth/me', authenticateToken, async (req, res) => {
-  const user = await prisma.user.findUnique({ where: { id: req.user.id } });
-  res.json(user);
+  try {
+    const user = await prisma.user.findUnique({ where: { id: req.user.id } });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    res.json(user);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
 });
 
 // --- USER ROUTES ---
@@ -136,6 +144,101 @@ app.get('/api/dashboard/stats', authenticateToken, (req, res) => {
         pendingOrders: 12,
         activeDrivers: 5
     });
+});
+
+// --- ORDER ROUTES ---
+
+app.get('/api/orders', authenticateToken, async (req, res) => {
+  try {
+    const orders = await prisma.order.findMany({
+      include: {
+        items: {
+          include: {
+            product: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+    
+    // Map to frontend expectations
+    const formattedOrders = orders.map(order => ({
+      ...order,
+      created_at: order.createdAt, // Frontend expects snake_case from Supabase habits
+      customer_name: null // Schema doesn't have customer name yet
+    }));
+
+    res.json(formattedOrders);
+  } catch (error) {
+    console.error('Error fetching orders:', error);
+    res.status(500).json({ error: 'Error fetching orders' });
+  }
+});
+
+app.post('/api/orders', async (req, res) => {
+  // Public endpoint for creating orders (e.g. from a kiosk or app)
+  const { items } = req.body; // items: [{ productId, quantity }]
+  
+  if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ error: 'Items are required' });
+  }
+
+  try {
+    // Calculate total and prepare items
+    let total = 0;
+    const orderItemsData = [];
+    
+    for (const item of items) {
+      const product = await prisma.product.findUnique({ where: { id: item.productId } });
+      if (!product) {
+          return res.status(400).json({ error: `Product ${item.productId} not found` });
+      }
+      
+      const itemTotal = product.price * item.quantity;
+      total += itemTotal;
+      orderItemsData.push({
+        productId: item.productId,
+        quantity: item.quantity,
+        price: product.price
+      });
+    }
+
+    const order = await prisma.order.create({
+      data: {
+        status: 'PENDING',
+        total,
+        items: {
+          create: orderItemsData
+        }
+      },
+      include: {
+        items: true
+      }
+    });
+    
+    res.json(order);
+  } catch (error) {
+    console.error('Error creating order:', error);
+    res.status(500).json({ error: 'Error creating order' });
+  }
+});
+
+app.patch('/api/orders/:id/status', authenticateToken, authorizeRole(['ADMIN', 'MANAGER', 'COOK', 'DRIVER']), async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  
+  try {
+    const order = await prisma.order.update({
+      where: { id: parseInt(id) },
+      data: { status },
+    });
+    res.json(order);
+  } catch (error) {
+    console.error('Error updating order:', error);
+    res.status(400).json({ error: 'Error updating order' });
+  }
 });
 
 const startServer = async () => {
