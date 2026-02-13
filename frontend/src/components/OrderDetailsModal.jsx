@@ -36,17 +36,17 @@ export default function OrderDetailsModal({ order, onClose, onUpdateStatus }) {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-        <div className="p-6 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white z-10">
+      <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto transition-colors duration-300">
+        <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex items-center justify-between sticky top-0 bg-white dark:bg-slate-800 z-10 transition-colors duration-300">
           <div>
-            <h2 className="text-xl font-bold text-slate-800">Pedido #{order.id}</h2>
-            <p className="text-sm text-slate-500">
+            <h2 className="text-xl font-bold text-slate-800 dark:text-white">Pedido #{order.id}</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">
               {new Date(order.created_at).toLocaleString('pt-BR')}
             </p>
           </div>
           <button 
             onClick={onClose}
-            className="p-2 hover:bg-slate-100 rounded-full text-slate-500 transition-colors"
+            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full text-slate-500 dark:text-slate-400 transition-colors"
           >
             <X size={20} />
           </button>
@@ -55,61 +55,61 @@ export default function OrderDetailsModal({ order, onClose, onUpdateStatus }) {
         <div className="p-6 space-y-6">
           {/* Status e Cliente */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-              <p className="text-sm font-medium text-slate-500 mb-1">Status do Pedido</p>
+            <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Status do Pedido</p>
               <span className={`px-3 py-1 rounded-full text-sm font-semibold border inline-flex items-center gap-2 ${getStatusColor(order.status)}`}>
                 {getStatusLabel(order.status)}
               </span>
             </div>
-            <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-              <p className="text-sm font-medium text-slate-500 mb-1">Cliente</p>
-              <p className="font-semibold text-slate-800">{order.customer_name || 'Cliente Anônimo'}</p>
+            <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">Cliente</p>
+              <p className="font-semibold text-slate-800 dark:text-white">{order.customer_name || 'Cliente Anônimo'}</p>
             </div>
           </div>
 
           {/* Itens do Pedido */}
           <div>
-            <h3 className="font-semibold text-slate-800 mb-3 flex items-center gap-2">
-              <Package size={18} className="text-slate-500" />
+            <h3 className="font-semibold text-slate-800 dark:text-white mb-3 flex items-center gap-2">
+              <Package size={18} className="text-slate-500 dark:text-slate-400" />
               Itens do Pedido
             </h3>
-            <div className="border border-slate-100 rounded-xl overflow-hidden">
+            <div className="border border-slate-100 dark:border-slate-700 rounded-xl overflow-hidden">
               <table className="w-full text-left text-sm">
-                <thead className="bg-slate-50 border-b border-slate-100">
+                <thead className="bg-slate-50 dark:bg-slate-900 border-b border-slate-100 dark:border-slate-700">
                   <tr>
-                    <th className="px-4 py-3 font-medium text-slate-500">Produto</th>
-                    <th className="px-4 py-3 font-medium text-slate-500 text-center">Qtd</th>
-                    <th className="px-4 py-3 font-medium text-slate-500 text-right">Preço Un.</th>
-                    <th className="px-4 py-3 font-medium text-slate-500 text-right">Total</th>
+                    <th className="px-4 py-3 font-medium text-slate-500 dark:text-slate-400">Produto</th>
+                    <th className="px-4 py-3 font-medium text-slate-500 dark:text-slate-400 text-center">Qtd</th>
+                    <th className="px-4 py-3 font-medium text-slate-500 dark:text-slate-400 text-right">Preço Un.</th>
+                    <th className="px-4 py-3 font-medium text-slate-500 dark:text-slate-400 text-right">Total</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
                   {order.items?.map((item, idx) => (
                     <tr key={idx}>
-                      <td className="px-4 py-3 text-slate-800 font-medium">
+                      <td className="px-4 py-3 text-slate-800 dark:text-slate-200 font-medium">
                         {item.product?.name || `Produto #${item.productId}`}
                       </td>
-                      <td className="px-4 py-3 text-slate-600 text-center">{item.quantity}</td>
-                      <td className="px-4 py-3 text-slate-600 text-right">
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-center">{item.quantity}</td>
+                      <td className="px-4 py-3 text-slate-600 dark:text-slate-400 text-right">
                         R$ {Number(item.price).toFixed(2)}
                       </td>
-                      <td className="px-4 py-3 text-slate-800 font-medium text-right">
+                      <td className="px-4 py-3 text-slate-800 dark:text-slate-200 font-medium text-right">
                         R$ {(Number(item.price) * item.quantity).toFixed(2)}
                       </td>
                     </tr>
                   ))}
                   {(!order.items || order.items.length === 0) && (
                     <tr>
-                      <td colSpan="4" className="px-4 py-8 text-center text-slate-400 italic">
+                      <td colSpan="4" className="px-4 py-8 text-center text-slate-400 dark:text-slate-500 italic">
                         Nenhum item registrado neste pedido.
                       </td>
                     </tr>
                   )}
                 </tbody>
-                <tfoot className="bg-slate-50 border-t border-slate-100">
+                <tfoot className="bg-slate-50 dark:bg-slate-900 border-t border-slate-100 dark:border-slate-700">
                   <tr>
-                    <td colSpan="3" className="px-4 py-3 font-bold text-slate-800 text-right">Total do Pedido:</td>
-                    <td className="px-4 py-3 font-bold text-emerald-600 text-right text-lg">
+                    <td colSpan="3" className="px-4 py-3 font-bold text-slate-800 dark:text-white text-right">Total do Pedido:</td>
+                    <td className="px-4 py-3 font-bold text-emerald-600 dark:text-emerald-400 text-right text-lg">
                       R$ {Number(order.total).toFixed(2)}
                     </td>
                   </tr>
@@ -120,7 +120,7 @@ export default function OrderDetailsModal({ order, onClose, onUpdateStatus }) {
 
           {/* Ações Rápidas */}
           <div>
-            <h3 className="font-semibold text-slate-800 mb-3">Ações Rápidas</h3>
+            <h3 className="font-semibold text-slate-800 dark:text-white mb-3">Ações Rápidas</h3>
             <div className="flex flex-wrap gap-2">
               {order.status === 'PENDING' && (
                 <button 

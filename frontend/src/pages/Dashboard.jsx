@@ -4,10 +4,10 @@ import { DollarSign, ShoppingBag, Truck, Users } from 'lucide-react';
 import OrderDetailsModal from '../components/OrderDetailsModal';
 
 const StatCard = ({ title, value, icon, color }) => (
-  <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
+  <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors duration-300">
     <div>
-      <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
-      <h3 className="text-2xl font-bold text-slate-800">{value}</h3>
+      <p className="text-sm font-medium text-slate-500 dark:text-slate-400 mb-1">{title}</p>
+      <h3 className="text-2xl font-bold text-slate-800 dark:text-white">{value}</h3>
     </div>
     <div className={`p-3 rounded-lg ${color}`}>
       {icon}
@@ -83,31 +83,31 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-        <h3 className="text-lg font-bold text-slate-800 mb-4">Visão Geral - Últimos Pedidos (Atualização Automática)</h3>
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors duration-300">
+        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Visão Geral - Últimos Pedidos (Atualização Automática)</h3>
         {orders.length === 0 ? (
-          <p className="text-slate-500">Nenhum pedido registrado ainda.</p>
+          <p className="text-slate-500 dark:text-slate-400">Nenhum pedido registrado ainda.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-slate-100">
-                  <th className="pb-3 font-medium text-slate-500">ID</th>
-                  <th className="pb-3 font-medium text-slate-500">Cliente</th>
-                  <th className="pb-3 font-medium text-slate-500">Total</th>
-                  <th className="pb-3 font-medium text-slate-500">Status</th>
-                  <th className="pb-3 font-medium text-slate-500">Data</th>
+                <tr className="border-b border-slate-100 dark:border-slate-700">
+                  <th className="pb-3 font-medium text-slate-500 dark:text-slate-400">ID</th>
+                  <th className="pb-3 font-medium text-slate-500 dark:text-slate-400">Cliente</th>
+                  <th className="pb-3 font-medium text-slate-500 dark:text-slate-400">Total</th>
+                  <th className="pb-3 font-medium text-slate-500 dark:text-slate-400">Status</th>
+                  <th className="pb-3 font-medium text-slate-500 dark:text-slate-400">Data</th>
                 </tr>
               </thead>
               <tbody>
                 {orders.map((order) => (
                   <tr 
                     key={order.id} 
-                    className="border-b border-slate-50 last:border-0 hover:bg-slate-50 cursor-pointer transition-colors"
+                    className="border-b border-slate-50 dark:border-slate-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors"
                     onClick={() => setSelectedOrder(order)}
                   >
-                    <td className="py-3 text-slate-800">#{order.id}</td>
-                    <td className="py-3 text-slate-800">{order.customer_name || 'Cliente Anônimo'}</td>
+                    <td className="py-3 text-slate-800 dark:text-slate-200">#{order.id}</td>
+                    <td className="py-3 text-slate-800 dark:text-slate-200">{order.customer_name || 'Cliente Anônimo'}</td>
                     <td className="py-3 text-emerald-600 font-medium">R$ {Number(order.total).toFixed(2)}</td>
                     <td className="py-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
@@ -118,7 +118,7 @@ export default function Dashboard() {
                         {order.status}
                       </span>
                     </td>
-                    <td className="py-3 text-slate-500 text-sm">
+                    <td className="py-3 text-slate-500 dark:text-slate-400 text-sm">
                       {new Date(order.created_at).toLocaleString('pt-BR')}
                     </td>
                   </tr>
