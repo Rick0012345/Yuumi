@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import api from '../api';
 import { DollarSign, ShoppingBag, Truck, Users } from 'lucide-react';
 import OrderDetailsModal from '../components/OrderDetailsModal';
+import { getStatusColor, getStatusLabel } from '../utils/status';
 
 const StatCard = ({ title, value, icon, color }) => (
   <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 flex items-center justify-between transition-colors duration-300">
@@ -110,12 +111,8 @@ export default function Dashboard() {
                     <td className="py-3 text-slate-800 dark:text-slate-200">{order.customer_name || 'Cliente Anônimo'}</td>
                     <td className="py-3 text-emerald-600 font-medium">R$ {Number(order.total).toFixed(2)}</td>
                     <td className="py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        order.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 
-                        order.status === 'COMPLETED' ? 'bg-emerald-100 text-emerald-700' : 
-                        'bg-slate-100 text-slate-700'
-                      }`}>
-                        {order.status}
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
+                        {getStatusLabel(order.status)}
                       </span>
                     </td>
                     <td className="py-3 text-slate-500 dark:text-slate-400 text-sm">
