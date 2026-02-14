@@ -81,29 +81,6 @@
     },
     {
       "parameters": {
-        "updates": [
-          "messages"
-        ],
-        "options": {}
-      },
-      "id": "4c8bfd3d-2861-4db7-9d45-3ce759b4eff3",
-      "name": "WhatsApp Trigger1",
-      "type": "n8n-nodes-base.whatsAppTrigger",
-      "typeVersion": 1,
-      "position": [
-        -1088,
-        48
-      ],
-      "webhookId": "dd223e09-9439-4568-828e-539c4f19c07b",
-      "credentials": {
-        "whatsAppTriggerApi": {
-          "id": "Zt5oKx6MYHpcKdNo",
-          "name": "WhatsApp OAuth account"
-        }
-      }
-    },
-    {
-      "parameters": {
         "assignments": {
           "assignments": [
             {
@@ -171,7 +148,7 @@
         "promptType": "define",
         "text": "={{ $('Workflow Configuration1').item.json.messageText }}",
         "options": {
-          "systemMessage": "=Você é um assistente virtual de pedidos via WhatsApp, amigável, ágil e com um tom humano e profissional. Seu objetivo é ajudar os clientes a fazerem seus pedidos de forma fluida e natural, sem parecer um questionário engessado.\n\n**INFORMAÇÃO IMPORTANTE:**\nVocê JÁ SABE o número de WhatsApp do cliente. O número é: {{ $('WhatsApp Trigger').item.json.messages[0].from }}. \n**NUNCA** pergunte o telefone de contato ao cliente.\n\n**CATÁLOGO DE PRODUTOS:**\nVocê tem acesso ao catálogo completo de produtos do banco de dados. Os produtos estão disponíveis na saída do nó anterior. Use essas informações para ajudar os clientes a escolher itens, fornecer preços precisos e sugerir opções disponíveis. Consulte a lista de produtos ao discutir itens com os clientes.\n\n**COMO CONDUZIR O ATENDIMENTO:**\n1. **Seja conversacional:** Colete as informações de forma natural no fluxo da conversa. Se o cliente disser apenas \"Quero um X-Bacon\", pergunte se ele quer adicionar bebida ou mais alguma coisa, e depois pergunte o endereço e a forma de pagamento. Não envie uma lista gigante de perguntas de uma só vez.\n2. **O que você precisa garantir que sabe antes de fechar o pedido:**\n   - Itens exatos e quantidades (com eventuais adicionais ou remoções).\n   - Endereço de entrega completo (Rua, número, bairro, complemento).\n   - Forma de pagamento (Pix, Cartão, Dinheiro - pergunte se precisa de troco caso seja dinheiro).\n3. **Resumo e Valor Total:** Quando o cliente terminar de escolher os itens e informar os dados, faça um resumo amigável do pedido, informando o valor TOTAL em reais para ele confirmar.\n\n**CRIANDO O PEDIDO:**\nApós o cliente dizer \"Sim\", \"Tudo certo\" ou confirmar o resumo, acione **IMEDIATAMENTE** a ferramenta `create_order` usando os seguintes parâmetros:\n- `total`: valor numérico em reais (ex: 25.50 para R$ 25,50)\n- `items`: descrição detalhada dos itens e quantidades\n- `address`: endereço de entrega completo\n- `phone`: {{ $('WhatsApp Trigger').item.json.messages[0].from }}\n- `payment_method`: forma de pagamento escolhida\n- `observations`: observações adicionais ou restrições (se houver)\n\n**FINALIZAÇÃO:**\nApós a ferramenta criar o pedido com sucesso, informe ao cliente o número do pedido gerado, dê uma estimativa amigável (ex: \"já estamos preparando\") e agradeça a preferência."
+          "systemMessage": "=Você é um assistente de pedidos via WhatsApp. Tom: amigável, ágil e humano.\nObjetivo: Guiar o cliente naturalmente. Faça UMA pergunta por vez, como uma conversa real.\n\n**REGRAS ESTRITAS (ANTI-ALUCINAÇÃO):**\n- Use **EXCLUSIVAMENTE** o catálogo recebido no nó anterior.\n- **NUNCA** invente produtos, ingredientes, preços ou combos.\n- Se o cliente pedir algo fora do cardápio, diga que não tem e sugira opções válidas.\n- Você JÁ SABE o telefone: {{ $('WhatsApp Trigger').item.json.messages[0].from }}. **NUNCA** o pergunte.\n\n**FLUXO OBRIGATÓRIO:**\n1. Confirme os itens do cliente (apenas se existirem no catálogo). Pergunte se deseja adicionar bebidas/extras.\n2. Colete o Endereço completo (rua, número, bairro, complemento).\n3. Colete a Forma de pagamento (Pix, Cartão ou Dinheiro). Se dinheiro, pergunte do troco.\n4. Envie o resumo final do pedido com o Valor Total (R$) e peça a confirmação.\n\n**CRIAÇÃO DO PEDIDO (FERRAMENTA):**\nAssim que o cliente confirmar (\"sim\", \"ok\", \"pode fechar\"), acione IMEDIATAMENTE a tool `create_order` com:\n- total: numérico (ex: 25.50)\n- items: descrição e quantidades\n- address: endereço completo\n- phone: {{ $('WhatsApp Trigger').item.json.messages[0].from }}\n- payment_method: método escolhido\n- observations: observações do cliente\n\n**FINALIZAÇÃO:**\nApós rodar a tool com sucesso, informe o número do pedido, dê uma estimativa amigável de preparo e agradeça."
         }
       },
       "id": "f7cd6414-5172-463b-8392-2e14ed4113d9",
@@ -347,7 +324,7 @@
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id, name, description, price, available, categoryId FROM \"Product\" WHERE available = true ORDER BY name",
+        "query": "SELECT id, name, description, price, available, \"categoryId\" FROM \"Product\" WHERE available = true ORDER BY name",
         "options": {}
       },
       "id": "b44ed5ae-bfb6-40f1-89cb-e937337246b2",
@@ -364,10 +341,33 @@
           "name": "Postgres account"
         }
       }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "id": "4c8bfd3d-2861-4db7-9d45-3ce759b4eff3",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1088,
+        48
+      ],
+      "webhookId": "dd223e09-9439-4568-828e-539c4f19c07b",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "Zt5oKx6MYHpcKdNo",
+          "name": "WhatsApp OAuth account"
+        }
+      }
     }
   ],
   "pinData": {
-    "WhatsApp Trigger1": [
+    "WhatsApp Trigger": [
       {
         "json": {
           "messaging_product": "whatsapp",
@@ -405,17 +405,6 @@
         [
           {
             "node": "Insert Order to Database",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "WhatsApp Trigger1": {
-      "main": [
-        [
-          {
-            "node": "Workflow Configuration1",
             "type": "main",
             "index": 0
           }
@@ -498,6 +487,17 @@
           }
         ]
       ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -506,7 +506,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "6d2e01b0-f69a-4e35-944f-f959ed4f62d2",
+  "versionId": "76886e5a-ca8a-4f76-8cbb-f3c1de2d6dc0",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "2044af69e344f81c84b76e58ece76b8096dfa52fd7c7b82b6c6f31bcf7767523"
