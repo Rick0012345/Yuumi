@@ -1,0 +1,516 @@
+{
+  "name": "yuumi chatvot",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE IF NOT EXISTS clientes_chatbot (id SERIAL PRIMARY KEY, phone_number VARCHAR(50) UNIQUE NOT NULL, name VARCHAR(255), created_at TIMESTAMP DEFAULT NOW(), updated_at TIMESTAMP DEFAULT NOW())",
+        "options": {}
+      },
+      "id": "ca78582a-f7ee-488a-b52e-19f62e0e5a39",
+      "name": "Create Table clientes_chatbot",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -880,
+        704
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM n8n_chat_histories",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -672,
+        704
+      ],
+      "id": "f2fb7f2d-134f-4739-a6db-7c63358a4877",
+      "name": "deletar memoria do chat",
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "8b97672d-cff7-4e5e-9f63-94c7f0da61a0",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        16,
+        848
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO \"Order\" (status, total, items, address, phone, payment_method, observations, \"createdAt\", \"updatedAt\") VALUES ('PENDING', $1, $2, $3, $4, $5, $6, NOW(), NOW()) RETURNING id, status, total, \"createdAt\"",
+        "options": {
+          "queryReplacement": "={{ $json.total }},={{ $json.items || '' }},={{ $json.address || '' }},={{ $json.phone || '' }},={{ $json.payment_method || '' }},={{ $json.observations || '' }}"
+        }
+      },
+      "id": "e04533a2-38eb-41c9-b87f-3e87d1ce0cdc",
+      "name": "Insert Order to Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        288,
+        848
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "id": "4c8bfd3d-2861-4db7-9d45-3ce759b4eff3",
+      "name": "WhatsApp Trigger1",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1088,
+        48
+      ],
+      "webhookId": "dd223e09-9439-4568-828e-539c4f19c07b",
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "Zt5oKx6MYHpcKdNo",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "phoneNumber",
+              "value": "={{ $json.contacts[0].wa_id }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "userName",
+              "value": "={{ $json.contacts[0].profile?.name || 'Unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "messageText",
+              "value": "={{ $json.messages[0].text.body }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "timestamp",
+              "value": "={{ $json.messages[0].timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "aa87b7a7-b6f0-45e8-8c64-b26a9614defe",
+      "name": "Workflow Configuration1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -864,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO clientes_chatbot (phone_number, name, created_at) VALUES ($1, $2, NOW()) ON CONFLICT (phone_number) DO NOTHING RETURNING *",
+        "options": {
+          "queryReplacement": "={{ $json.phoneNumber }},={{ $json.userName }}"
+        }
+      },
+      "id": "4a8a50d2-8863-400b-9b44-3b52ad564c40",
+      "name": "Check and Save User1",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -656,
+        48
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Workflow Configuration1').item.json.messageText }}",
+        "options": {
+          "systemMessage": "=Você é um assistente virtual de pedidos via WhatsApp, amigável, ágil e com um tom humano e profissional. Seu objetivo é ajudar os clientes a fazerem seus pedidos de forma fluida e natural, sem parecer um questionário engessado.\n\n**INFORMAÇÃO IMPORTANTE:**\nVocê JÁ SABE o número de WhatsApp do cliente. O número é: {{ $('WhatsApp Trigger').item.json.messages[0].from }}. \n**NUNCA** pergunte o telefone de contato ao cliente.\n\n**CATÁLOGO DE PRODUTOS:**\nVocê tem acesso ao catálogo completo de produtos do banco de dados. Os produtos estão disponíveis na saída do nó anterior. Use essas informações para ajudar os clientes a escolher itens, fornecer preços precisos e sugerir opções disponíveis. Consulte a lista de produtos ao discutir itens com os clientes.\n\n**COMO CONDUZIR O ATENDIMENTO:**\n1. **Seja conversacional:** Colete as informações de forma natural no fluxo da conversa. Se o cliente disser apenas \"Quero um X-Bacon\", pergunte se ele quer adicionar bebida ou mais alguma coisa, e depois pergunte o endereço e a forma de pagamento. Não envie uma lista gigante de perguntas de uma só vez.\n2. **O que você precisa garantir que sabe antes de fechar o pedido:**\n   - Itens exatos e quantidades (com eventuais adicionais ou remoções).\n   - Endereço de entrega completo (Rua, número, bairro, complemento).\n   - Forma de pagamento (Pix, Cartão, Dinheiro - pergunte se precisa de troco caso seja dinheiro).\n3. **Resumo e Valor Total:** Quando o cliente terminar de escolher os itens e informar os dados, faça um resumo amigável do pedido, informando o valor TOTAL em reais para ele confirmar.\n\n**CRIANDO O PEDIDO:**\nApós o cliente dizer \"Sim\", \"Tudo certo\" ou confirmar o resumo, acione **IMEDIATAMENTE** a ferramenta `create_order` usando os seguintes parâmetros:\n- `total`: valor numérico em reais (ex: 25.50 para R$ 25,50)\n- `items`: descrição detalhada dos itens e quantidades\n- `address`: endereço de entrega completo\n- `phone`: {{ $('WhatsApp Trigger').item.json.messages[0].from }}\n- `payment_method`: forma de pagamento escolhida\n- `observations`: observações adicionais ou restrições (se houver)\n\n**FINALIZAÇÃO:**\nApós a ferramenta criar o pedido com sucesso, informe ao cliente o número do pedido gerado, dê uma estimativa amigável (ex: \"já estamos preparando\") e agradeça a preferência."
+        }
+      },
+      "id": "f7cd6414-5172-463b-8392-2e14ed4113d9",
+      "name": "AI Agent1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -256,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "id": "9f2ae373-05f1-4d60-abd2-52d1e5f37958",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -416,
+        272
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "svKHhCQfIv3yGCjt",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Workflow Configuration1').item.json.phoneNumber }}",
+        "contextWindowLength": 30
+      },
+      "id": "6dc74f90-9b68-4ae7-98f2-5e7d856dff16",
+      "name": "Postgres Chat Memory1",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -288,
+        272
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1001163339739167",
+        "recipientPhoneNumber": "={{ $('Workflow Configuration1').item.json.phoneNumber }}",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "3cda5589-4fda-4640-90e4-6d0758e18bbe",
+      "name": "Send WhatsApp Response1",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        48,
+        48
+      ],
+      "webhookId": "7777ae7b-27d2-4820-b44e-c1c32fd70b85",
+      "credentials": {
+        "whatsAppApi": {
+          "id": "wvoYuCni8NhdJa3Z",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Cria um novo pedido no banco de dados. OBRIGATÓRIO: total (valor numérico). OPCIONAIS: items, address, phone, payment_method, observations.",
+        "workflowId": {
+          "__rl": true,
+          "value": "TjRavnsWhOXHfm-aCmaq-",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/TjRavnsWhOXHfm-aCmaq-",
+          "cachedResultName": "sub-workflow-insert"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "total": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('total', ``, 'string') }}",
+            "items": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('items', ``, 'string') }}",
+            "phone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('phone', ``, 'string') }}",
+            "adress": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('adress', ``, 'string') }}",
+            "payment_method": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('payment_method', ``, 'string') }}",
+            "observations": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('observations', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "items",
+              "displayName": "items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "adress",
+              "displayName": "adress",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "payment_method",
+              "displayName": "payment_method",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "observations",
+              "displayName": "observations",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "9bbb60db-51aa-46d2-b4f2-dc90e5a590c6",
+      "name": "Create Order Workflow Tool1",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -176,
+        272
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, name, description, price, available, categoryId FROM \"Product\" WHERE available = true ORDER BY name",
+        "options": {}
+      },
+      "id": "b44ed5ae-bfb6-40f1-89cb-e937337246b2",
+      "name": "Get Products List",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -480,
+        48
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "WhatsApp Trigger1": [
+      {
+        "json": {
+          "messaging_product": "whatsapp",
+          "metadata": {
+            "display_phone_number": "5521991843847",
+            "phone_number_id": "1001163339739167"
+          },
+          "contacts": [
+            {
+              "profile": {
+                "name": "Patrick"
+              },
+              "wa_id": "5521984870401"
+            }
+          ],
+          "messages": [
+            {
+              "from": "5521984870401",
+              "id": "wamid.HBgNNTUyMTk4NDg3MDQwMRUCABIYIEFDMDA3MUQ3QTk3NEMyRDVGMDRBNEY0Mjk0NUIzNjg4AA==",
+              "timestamp": "1771020499",
+              "text": {
+                "body": "o que tem no cardápio?"
+              },
+              "type": "text"
+            }
+          ],
+          "field": "messages"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Insert Order to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger1": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration1": {
+      "main": [
+        [
+          {
+            "node": "Check and Save User1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check and Save User1": {
+      "main": [
+        [
+          {
+            "node": "Get Products List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Order Workflow Tool1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Products List": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "6d2e01b0-f69a-4e35-944f-f959ed4f62d2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2044af69e344f81c84b76e58ece76b8096dfa52fd7c7b82b6c6f31bcf7767523"
+  },
+  "id": "AqOJLISR9YPOaEMkGGzLw",
+  "tags": []
+}

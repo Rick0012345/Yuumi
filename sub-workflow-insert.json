@@ -1,0 +1,222 @@
+{
+  "name": "sub-workflow-insert",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "total",
+              "type": "number"
+            },
+            {
+              "name": "items"
+            },
+            {
+              "name": "phone"
+            },
+            {
+              "name": "adress"
+            },
+            {
+              "name": "payment_method"
+            },
+            {
+              "name": "observations"
+            }
+          ]
+        }
+      },
+      "id": "e6d0745e-b7e4-40cb-a810-19c371e54dab",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -656,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO \"Order\" (status, total, address, phone, payment_method, observations, \"createdAt\", \"updatedAt\") VALUES ('PENDING', $1, $2, $3, $4, $5, NOW(), NOW()) RETURNING id, status, total, \"createdAt\"",
+        "options": {
+          "queryReplacement": "={{ $json.total }},={{ $json.address || '' }},={{ $json.phone || '' }},={{ $json.payment_method || '' }},={{ $json.observations || '' }}"
+        }
+      },
+      "id": "8f6cba3e-a591-4d64-a5af-e5f6ae3d6a28",
+      "name": "Insert Order to Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -160,
+        256
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO \"OrderItem\" (\"orderId\", \"productId\", \"quantity\", \"price\") VALUES ($1, $2, $3, $4)",
+        "options": {
+          "queryReplacement": "={{ $('Insert Order to Database').item.json.id }},={{ $json.productId || 0 }},={{ $json.quantity || 1 }},={{ $json.price || 0 }}"
+        }
+      },
+      "id": "9a45d175-a822-44a4-8d7d-35dc9f5b430a",
+      "name": "Insert Order Items",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        16,
+        256
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "orderId",
+              "value": "={{ $('Insert Order to Database').item.json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "id-2",
+              "name": "status",
+              "value": "={{ $('Insert Order to Database').item.json.status }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "total",
+              "value": "={{ $('Insert Order to Database').item.json.total }}",
+              "type": "number"
+            },
+            {
+              "id": "id-4",
+              "name": "createdAt",
+              "value": "={{ $('Insert Order to Database').item.json.createdAt }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "message",
+              "value": "=Pedido #{{ $('Insert Order to Database').item.json.id }} criado com sucesso!",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7441cedb-69e6-4938-bd7c-192147cd762a",
+      "name": "Prepare Final Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        256
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst outputItems = [];\n\nitems.forEach(item => {\n  let itemsArray = [];\n  \n  if (typeof item.json.items === 'string') {\n    try {\n      itemsArray = JSON.parse(item.json.items);\n    } catch(e) {\n      itemsArray = item.json.items.split(',').map(i => i.trim());\n    }\n  } else if (Array.isArray(item.json.items)) {\n    itemsArray = item.json.items;\n  } else {\n    itemsArray = [];\n  }\n  \n  item.json.itemsArray = itemsArray;\n  item.json.orderId = null;\n  outputItems.push({ json: item.json });\n});\n\nreturn outputItems;"
+      },
+      "id": "03b17784-a0e6-4205-939d-d21b953d085d",
+      "name": "Parse Items Array",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -352,
+        256
+      ]
+    }
+  ],
+  "pinData": {
+    "Execute Workflow Trigger": [
+      {
+        "json": {
+          "total": "5.00",
+          "items": "1 Coca-Cola",
+          "phone": "5521984870401",
+          "adress": "Rua dos Bobos, Número 0, CEP 3455213",
+          "payment_method": "Dinheiro",
+          "observations": ""
+        },
+        "pairedItem": {
+          "item": 0
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Items Array",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Order to Database": {
+      "main": [
+        [
+          {
+            "node": "Insert Order Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Insert Order Items": {
+      "main": [
+        [
+          {
+            "node": "Prepare Final Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Items Array": {
+      "main": [
+        [
+          {
+            "node": "Insert Order to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "40633133-20a4-4152-8dde-0ed2a7e1f85a",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2044af69e344f81c84b76e58ece76b8096dfa52fd7c7b82b6c6f31bcf7767523"
+  },
+  "id": "TjRavnsWhOXHfm-aCmaq-",
+  "tags": []
+}

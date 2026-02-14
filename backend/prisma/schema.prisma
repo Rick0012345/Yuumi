@@ -1,17 +1,10 @@
 generator client {
-  provider      = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-}
-
-enum Role {
-  ADMIN
-  MANAGER
-  COOK
-  DRIVER
 }
 
 model User {
@@ -28,40 +21,65 @@ model Category {
   id          Int       @id @default(autoincrement())
   name        String
   description String?
-  products    Product[]
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  products    Product[]
 }
 
 model Product {
-  id          Int      @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   name        String
   description String?
   price       Float
   imageUrl    String?
-  available   Boolean  @default(true)
+  available   Boolean     @default(true)
   categoryId  Int
-  category    Category @relation(fields: [categoryId], references: [id])
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   orderItems  OrderItem[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  category    Category    @relation(fields: [categoryId], references: [id])
 }
 
 model Order {
-  id        Int      @id @default(autoincrement())
-  status    String   @default("PENDING") // PENDING, PREPARING, READY, DELIVERING, DELIVERED
-  total     Float
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  items     OrderItem[]
+  id             Int         @id @default(autoincrement())
+  status         String      @default("PENDING")
+  total          Float
+  address        String?
+  phone          String?
+  payment_method String?
+  observations   String?
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  items          OrderItem[]
 }
 
 model OrderItem {
   id        Int     @id @default(autoincrement())
   orderId   Int
-  order     Order   @relation(fields: [orderId], references: [id])
   productId Int
-  product   Product @relation(fields: [productId], references: [id])
   quantity  Int
   price     Float
+  order     Order   @relation(fields: [orderId], references: [id])
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model clientes_chatbot {
+  id           Int       @id @default(autoincrement())
+  phone_number String    @unique @db.VarChar(50)
+  name         String?   @db.VarChar(255)
+  created_at   DateTime? @default(now()) @db.Timestamp(6)
+  updated_at   DateTime? @default(now()) @db.Timestamp(6)
+}
+
+model n8n_chat_histories {
+  id         Int    @id @default(autoincrement())
+  session_id String @db.VarChar(255)
+  message    Json
+}
+
+enum Role {
+  ADMIN
+  MANAGER
+  COOK
+  DRIVER
 }

@@ -148,6 +148,102 @@ app.get('/api/dashboard/stats', authenticateToken, (req, res) => {
 
 // --- ORDER ROUTES ---
 
+// --- CATEGORY ROUTES ---
+
+app.get('/api/categories', async (req, res) => {
+  try {
+    const categories = await prisma.category.findMany({
+      include: { products: true }
+    });
+    res.json(categories);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching categories' });
+  }
+});
+
+app.post('/api/categories', authenticateToken, authorizeRole(['ADMIN', 'MANAGER']), async (req, res) => {
+  const { name, description } = req.body;
+  try {
+    const category = await prisma.category.create({
+      data: { name, description }
+    });
+    res.json(category);
+  } catch (error) {
+    res.status(400).json({ error: 'Error creating category' });
+  }
+});
+
+// --- PRODUCT ROUTES ---
+
+app.get('/api/products', async (req, res) => {
+  try {
+    const products = await prisma.product.findMany({
+      include: { category: true }
+    });
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: 'Error fetching products' });
+  }
+});
+
+app.post('/api/products', authenticateToken, authorizeRole(['ADMIN', 'MANAGER']), async (req, res) => {
+  const { name, description, price, imageUrl, categoryId } = req.body;
+  
+  if (!categoryId) {
+    return res.status(400).json({ error: 'Category ID is required' });
+  }
+
+  try {
+    const product = await prisma.product.create({
+      data: {
+        name,
+        description,
+        price: parseFloat(price),
+        imageUrl,
+        categoryId: parseInt(categoryId),
+        available: true
+      }
+    });
+    res.json(product);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: 'Error creating product' });
+  }
+});
+
+app.put('/api/products/:id', authenticateToken, authorizeRole(['ADMIN', 'MANAGER']), async (req, res) => {
+  const { id } = req.params;
+  const { name, description, price, imageUrl, available, categoryId } = req.body;
+  
+  try {
+    const product = await prisma.product.update({
+      where: { id: parseInt(id) },
+      data: {
+        name,
+        description,
+        price: price ? parseFloat(price) : undefined,
+        imageUrl,
+        available,
+        categoryId: categoryId ? parseInt(categoryId) : undefined
+      }
+    });
+    res.json(product);
+  } catch (error) {
+    res.status(400).json({ error: 'Error updating product' });
+  }
+});
+
+app.delete('/api/products/:id', authenticateToken, authorizeRole(['ADMIN', 'MANAGER']), async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    await prisma.product.delete({ where: { id: parseInt(id) } });
+    res.json({ message: 'Product deleted successfully' });
+  } catch (error) {
+    res.status(400).json({ error: 'Error deleting product' });
+  }
+});
+
 app.get('/api/orders', authenticateToken, async (req, res) => {
   try {
     const orders = await prisma.order.findMany({
@@ -179,7 +275,7 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
 
 app.post('/api/orders', async (req, res) => {
   // Public endpoint for creating orders (e.g. from a kiosk or app)
-  const { items } = req.body; // items: [{ productId, quantity }]
+  const { items, address, phone, payment_method, observations } = req.body; // items: [{ productId, quantity }]
   
   if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Items are required' });
@@ -209,6 +305,10 @@ app.post('/api/orders', async (req, res) => {
       data: {
         status: 'PENDING',
         total,
+        address,
+        phone,
+        payment_method,
+        observations,
         items: {
           create: orderItemsData
         }
