@@ -31,45 +31,45 @@ export default function Users() {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-        <h3 className="text-lg font-bold text-slate-800 mb-4">Cadastrar Novo Usuário</h3>
+      <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Cadastrar Novo Usuário</h3>
         <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Nome</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome</label>
             <input 
               type="text" 
               value={newUser.name} 
               onChange={e => setNewUser({...newUser, name: e.target.value})} 
-              className="w-full px-3 py-2 border rounded-lg" 
+              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-colors" 
               required 
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
             <input 
               type="email" 
               value={newUser.email} 
               onChange={e => setNewUser({...newUser, email: e.target.value})} 
-              className="w-full px-3 py-2 border rounded-lg" 
+              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-colors" 
               required 
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Senha</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Senha</label>
             <input 
               type="password" 
               value={newUser.password} 
               onChange={e => setNewUser({...newUser, password: e.target.value})} 
-              className="w-full px-3 py-2 border rounded-lg" 
+              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-colors" 
               required 
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Função</label>
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Função</label>
             <select 
               value={newUser.role} 
               onChange={e => setNewUser({...newUser, role: e.target.value})} 
-              className="w-full px-3 py-2 border rounded-lg"
+              className="w-full px-3 py-2 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-colors"
             >
               <option value="COOK">Cozinheiro</option>
               <option value="DRIVER">Motoboy</option>
@@ -80,39 +80,39 @@ export default function Users() {
           <button 
             type="submit" 
             disabled={loading}
-            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2"
+            className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 flex items-center justify-center gap-2 transition-colors"
           >
             <Plus size={18} /> Cadastrar
           </button>
         </form>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+      <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
         <table className="w-full text-left">
-          <thead className="bg-slate-50 border-b border-slate-100">
+          <thead className="bg-slate-50 dark:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700">
             <tr>
-              <th className="px-6 py-4 font-semibold text-slate-600">Nome</th>
-              <th className="px-6 py-4 font-semibold text-slate-600">Email</th>
-              <th className="px-6 py-4 font-semibold text-slate-600">Função</th>
-              <th className="px-6 py-4 font-semibold text-slate-600">Data Cadastro</th>
+              <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-300">Nome</th>
+              <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-300">Email</th>
+              <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-300">Função</th>
+              <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-300">Data Cadastro</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
             {users.map(user => (
-              <tr key={user.id} className="hover:bg-slate-50">
-                <td className="px-6 py-4">{user.name}</td>
-                <td className="px-6 py-4 text-slate-500">{user.email}</td>
+              <tr key={user.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
+                <td className="px-6 py-4 text-slate-900 dark:text-slate-100">{user.name}</td>
+                <td className="px-6 py-4 text-slate-500 dark:text-slate-400">{user.email}</td>
                 <td className="px-6 py-4">
                   <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700' :
-                    user.role === 'MANAGER' ? 'bg-blue-100 text-blue-700' :
-                    user.role === 'COOK' ? 'bg-orange-100 text-orange-700' :
-                    'bg-green-100 text-green-700'
+                    user.role === 'ADMIN' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300' :
+                    user.role === 'MANAGER' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300' :
+                    user.role === 'COOK' ? 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-300' :
+                    'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300'
                   }`}>
                     {user.role}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-slate-400 text-sm">
+                <td className="px-6 py-4 text-slate-400 dark:text-slate-500 text-sm">
                   {new Date(user.createdAt).toLocaleDateString()}
                 </td>
               </tr>

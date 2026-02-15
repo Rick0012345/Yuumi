@@ -1,5 +1,5 @@
 {
-  "name": "yuumi chatvot",
+  "name": "yuumi chatbot",
   "nodes": [
     {
       "parameters": {
@@ -50,8 +50,8 @@
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        16,
-        848
+        -400,
+        736
       ],
       "disabled": true
     },
@@ -68,8 +68,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        288,
-        848
+        -128,
+        736
       ],
       "credentials": {
         "postgres": {
@@ -111,13 +111,13 @@
         },
         "options": {}
       },
-      "id": "aa87b7a7-b6f0-45e8-8c64-b26a9614defe",
+      "id": "db06302b-771b-469f-93c5-7d9bc3430dc9",
       "name": "Workflow Configuration1",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -864,
-        48
+        -928,
+        -224
       ]
     },
     {
@@ -125,16 +125,16 @@
         "operation": "executeQuery",
         "query": "INSERT INTO clientes_chatbot (phone_number, name, created_at) VALUES ($1, $2, NOW()) ON CONFLICT (phone_number) DO NOTHING RETURNING *",
         "options": {
-          "queryReplacement": "={{ $json.phoneNumber }},={{ $json.userName }}"
+          "queryReplacement": "={{ [$json.phoneNumber, $json.userName] }}"
         }
       },
-      "id": "4a8a50d2-8863-400b-9b44-3b52ad564c40",
+      "id": "d77f3106-3f41-4db3-ba64-8804cadec69f",
       "name": "Check and Save User1",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -656,
-        48
+        -704,
+        -224
       ],
       "credentials": {
         "postgres": {
@@ -145,23 +145,6 @@
     },
     {
       "parameters": {
-        "promptType": "define",
-        "text": "={{ $('Workflow Configuration1').item.json.messageText }}",
-        "options": {
-          "systemMessage": "=Você é um assistente de pedidos via WhatsApp. Tom: amigável, ágil e humano.\nObjetivo: Guiar o cliente naturalmente. Faça UMA pergunta por vez, como uma conversa real.\n\n**REGRAS ESTRITAS (ANTI-ALUCINAÇÃO):**\n- Use **EXCLUSIVAMENTE** o catálogo recebido no nó anterior.\n- **NUNCA** invente produtos, ingredientes, preços ou combos.\n- Se o cliente pedir algo fora do cardápio, diga que não tem e sugira opções válidas.\n- Você JÁ SABE o telefone: {{ $('WhatsApp Trigger').item.json.messages[0].from }}. **NUNCA** o pergunte.\n\n**FLUXO OBRIGATÓRIO:**\n1. Confirme os itens do cliente (apenas se existirem no catálogo). Pergunte se deseja adicionar bebidas/extras.\n2. Colete o Endereço completo (rua, número, bairro, complemento).\n3. Colete a Forma de pagamento (Pix, Cartão ou Dinheiro). Se dinheiro, pergunte do troco.\n4. Envie o resumo final do pedido com o Valor Total (R$) e peça a confirmação.\n\n**CRIAÇÃO DO PEDIDO (FERRAMENTA):**\nAssim que o cliente confirmar (\"sim\", \"ok\", \"pode fechar\"), acione IMEDIATAMENTE a tool `create_order` com:\n- total: numérico (ex: 25.50)\n- items: descrição e quantidades\n- address: endereço completo\n- phone: {{ $('WhatsApp Trigger').item.json.messages[0].from }}\n- payment_method: método escolhido\n- observations: observações do cliente\n\n**FINALIZAÇÃO:**\nApós rodar a tool com sucesso, informe o número do pedido, dê uma estimativa amigável de preparo e agradeça."
-        }
-      },
-      "id": "f7cd6414-5172-463b-8392-2e14ed4113d9",
-      "name": "AI Agent1",
-      "type": "@n8n/n8n-nodes-langchain.agent",
-      "typeVersion": 3.1,
-      "position": [
-        -256,
-        48
-      ]
-    },
-    {
-      "parameters": {
         "model": {
           "__rl": true,
           "value": "gpt-4o-mini",
@@ -169,15 +152,17 @@
           "cachedResultName": "gpt-4o-mini"
         },
         "builtInTools": {},
-        "options": {}
+        "options": {
+          "temperature": 0.6
+        }
       },
-      "id": "9f2ae373-05f1-4d60-abd2-52d1e5f37958",
+      "id": "b3ba2560-8907-4e4c-a0b1-78815bacf993",
       "name": "OpenAI Chat Model1",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
         -416,
-        272
+        48
       ],
       "credentials": {
         "openAiApi": {
@@ -192,13 +177,13 @@
         "sessionKey": "={{ $('Workflow Configuration1').item.json.phoneNumber }}",
         "contextWindowLength": 30
       },
-      "id": "6dc74f90-9b68-4ae7-98f2-5e7d856dff16",
+      "id": "6ce49a78-d68b-45b1-9425-e7f9d9181e01",
       "name": "Postgres Chat Memory1",
       "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
       "typeVersion": 1.3,
       "position": [
-        -288,
-        272
+        -224,
+        48
       ],
       "credentials": {
         "postgres": {
@@ -215,13 +200,13 @@
         "textBody": "={{ $json.output }}",
         "additionalFields": {}
       },
-      "id": "3cda5589-4fda-4640-90e4-6d0758e18bbe",
+      "id": "4da12b65-4d91-46f7-8b0c-31ec0daf705c",
       "name": "Send WhatsApp Response1",
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        48,
-        48
+        192,
+        -224
       ],
       "webhookId": "7777ae7b-27d2-4820-b44e-c1c32fd70b85",
       "credentials": {
@@ -312,13 +297,13 @@
           "convertFieldsToString": false
         }
       },
-      "id": "9bbb60db-51aa-46d2-b4f2-dc90e5a590c6",
+      "id": "35cf82c7-3052-4f8c-b834-6c622bc73f7a",
       "name": "Create Order Workflow Tool1",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -176,
-        272
+        -64,
+        48
       ]
     },
     {
@@ -327,13 +312,13 @@
         "query": "SELECT id, name, description, price, available, \"categoryId\" FROM \"Product\" WHERE available = true ORDER BY name",
         "options": {}
       },
-      "id": "b44ed5ae-bfb6-40f1-89cb-e937337246b2",
+      "id": "ab83534a-c8fc-4def-ae1d-08d5be3e3d6e",
       "name": "Get Products List",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
         -480,
-        48
+        -224
       ],
       "credentials": {
         "postgres": {
@@ -349,13 +334,13 @@
         ],
         "options": {}
       },
-      "id": "4c8bfd3d-2861-4db7-9d45-3ce759b4eff3",
+      "id": "53497f54-3587-4cc9-a1cd-6256849ac11a",
       "name": "WhatsApp Trigger",
       "type": "n8n-nodes-base.whatsAppTrigger",
       "typeVersion": 1,
       "position": [
-        -1088,
-        48
+        -1152,
+        -224
       ],
       "webhookId": "dd223e09-9439-4568-828e-539c4f19c07b",
       "credentials": {
@@ -364,6 +349,38 @@
           "name": "WhatsApp OAuth account"
         }
       }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"customerName\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n\t\t\"items\": {\n\t\t\t\"type\": \"array\",\n\t\t\t\"items\": {\n\t\t\t\t\"type\": \"object\",\n\t\t\t\t\"properties\": {\n\t\t\t\t\t\"productId\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t},\n\t\t\t\t\t\"quantity\": {\n\t\t\t\t\t\t\"type\": \"number\"\n\t\t\t\t\t},\n\t\t\t\t\t\"price\": {\n\t\t\t\t\t\t\"type\": \"number\"\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t},\n\t\t\"totalAmount\": {\n\t\t\t\"type\": \"number\"\n\t\t},\n\t\t\"deliveryAddress\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n\t\t\"phoneNumber\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n\t\t\"paymentMethod\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n\t\t\"observations\": {\n\t\t\t\"type\": \"string\"\n\t\t}\n\t}\n}"
+      },
+      "id": "4640d494-80de-43b8-9cdb-0dfe2a809cd2",
+      "name": "Order Output Parser",
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        96,
+        64
+      ]
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Workflow Configuration1').item.json.messageText }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "=Você é um assistente de vendas para um restaurante/loja via WhatsApp. Sua função é ajudar clientes a fazer pedidos de forma amigável e eficiente.\n\nPRODUTOS DISPONÍVEIS:\n{{ $('Get Products List').all().map(item => `${item.json.name} - R$ ${item.json.price} - ${item.json.description}`).join('\\n') }}\n\nINSTRUÇÕES:\n1) Cumprimente o cliente pelo nome quando disponível.\n2) Apresente os produtos disponíveis de forma clara.\n3) Ajude o cliente a escolher produtos e quantidades.\n4) Confirme o endereço de entrega e forma de pagamento.\n5) Quando o cliente confirmar o pedido completo, use a ferramenta Create Order para registrar.\n6) Seja sempre educado, claro e prestativo.\n7) Responda em português brasileiro."
+        }
+      },
+      "id": "20527f43-a4ae-4f16-b623-88a1162ee907",
+      "name": "AI Agent1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -256,
+        -224
+      ]
     }
   ],
   "pinData": {
@@ -389,7 +406,7 @@
               "id": "wamid.HBgNNTUyMTk4NDg3MDQwMRUCABIYIEFDMDA3MUQ3QTk3NEMyRDVGMDRBNEY0Mjk0NUIzNjg4AA==",
               "timestamp": "1771020499",
               "text": {
-                "body": "o que tem no cardápio?"
+                "body": "oi"
               },
               "type": "text"
             }
@@ -427,17 +444,6 @@
         [
           {
             "node": "Get Products List",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "AI Agent1": {
-      "main": [
-        [
-          {
-            "node": "Send WhatsApp Response1",
             "type": "main",
             "index": 0
           }
@@ -498,6 +504,28 @@
           }
         ]
       ]
+    },
+    "Order Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -506,7 +534,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "76886e5a-ca8a-4f76-8cbb-f3c1de2d6dc0",
+  "versionId": "85677867-4c58-429e-90c0-d64f495fed15",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "2044af69e344f81c84b76e58ece76b8096dfa52fd7c7b82b6c6f31bcf7767523"
