@@ -23,34 +23,37 @@
             },
             {
               "name": "observations"
+            },
+            {
+              "name": "customer_name"
             }
           ]
         }
       },
-      "id": "e6d0745e-b7e4-40cb-a810-19c371e54dab",
+      "id": "e5b462be-8cd4-441f-8752-0bea4b65b437",
       "name": "Execute Workflow Trigger",
       "type": "n8n-nodes-base.executeWorkflowTrigger",
       "typeVersion": 1.1,
       "position": [
-        -656,
-        256
+        -352,
+        32
       ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO \"Order\" (status, total, address, phone, payment_method, observations, \"createdAt\", \"updatedAt\") VALUES ('PENDING', $1, $2, $3, $4, $5, NOW(), NOW()) RETURNING id, status, total, \"createdAt\"",
+        "query": "INSERT INTO \"Order\" (status, total, address, phone, customer_name, payment_method, observations, \"createdAt\", \"updatedAt\") VALUES ('PENDING', $1, $2, $3, $4, $5, $6, NOW(), NOW()) RETURNING id, status, total, \"createdAt\"",
         "options": {
-          "queryReplacement": "={{ $json.total }},={{ $json.address || '' }},={{ $json.phone || '' }},={{ $json.payment_method || '' }},={{ $json.observations || '' }}"
+          "queryReplacement": "={{ [$json.total, $json.adress || '', $json.phone || '', $json.customer_name || '', $json.payment_method || '', $json.observations || ''] }}"
         }
       },
-      "id": "8f6cba3e-a591-4d64-a5af-e5f6ae3d6a28",
+      "id": "86b1c14b-686f-4461-b808-349155712d73",
       "name": "Insert Order to Database",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -160,
-        256
+        48,
+        32
       ],
       "credentials": {
         "postgres": {
@@ -64,16 +67,16 @@
         "operation": "executeQuery",
         "query": "INSERT INTO \"OrderItem\" (\"orderId\", \"productId\", \"quantity\", \"price\") VALUES ($1, $2, $3, $4)",
         "options": {
-          "queryReplacement": "={{ $('Insert Order to Database').item.json.id }},={{ $json.productId || 0 }},={{ $json.quantity || 1 }},={{ $json.price || 0 }}"
+          "queryReplacement": "={{ [ $json.orderId, $json.productId, $json.quantity, $json.price ] }}"
         }
       },
-      "id": "9a45d175-a822-44a4-8d7d-35dc9f5b430a",
+      "id": "63fe427d-c06a-4bf3-8f9a-51312e6a3458",
       "name": "Insert Order Items",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        16,
-        256
+        528,
+        32
       ],
       "credentials": {
         "postgres": {
@@ -120,42 +123,52 @@
         },
         "options": {}
       },
-      "id": "7441cedb-69e6-4938-bd7c-192147cd762a",
+      "id": "18e938ed-87fe-42e5-abd0-9f5b276bd7b1",
       "name": "Prepare Final Response",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        240,
-        256
+        752,
+        32
       ]
     },
     {
       "parameters": {
         "jsCode": "const items = $input.all();\nconst outputItems = [];\n\nitems.forEach(item => {\n  let itemsArray = [];\n  \n  if (typeof item.json.items === 'string') {\n    try {\n      itemsArray = JSON.parse(item.json.items);\n    } catch(e) {\n      itemsArray = item.json.items.split(',').map(i => i.trim());\n    }\n  } else if (Array.isArray(item.json.items)) {\n    itemsArray = item.json.items;\n  } else {\n    itemsArray = [];\n  }\n  \n  item.json.itemsArray = itemsArray;\n  item.json.orderId = null;\n  outputItems.push({ json: item.json });\n});\n\nreturn outputItems;"
       },
-      "id": "03b17784-a0e6-4205-939d-d21b953d085d",
+      "id": "5c458a15-872d-4b38-b26f-d18c8eef3906",
       "name": "Parse Items Array",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        -352,
-        256
+        -128,
+        32
       ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// 1. Pega o ID do pedido criado\nconst orderId = $('Insert Order to Database').first().json.id;\n\n// 2. Pega a string enviada pela IA\nconst itemsString = $('Execute Workflow Trigger').first().json.items || \"\";\nlet itemsArray = [];\n\ntry {\n  // Tenta extrair apenas o que está entre colchetes (caso a IA mande texto ou crases do Markdown)\n  // Isso acha qualquer coisa no formato [...]\n  const jsonMatch = itemsString.match(/\\[.*\\]/s); \n  \n  if (jsonMatch) {\n    itemsArray = JSON.parse(jsonMatch[0]);\n  } else {\n    // Se não achar colchetes, tenta fazer o parse direto (vai que ela mandou certo e estamos sendo paranóicos)\n    itemsArray = JSON.parse(itemsString);\n  }\n} catch (error) {\n  // Se falhar miseravelmente, cria um erro amigável para você debugar depois no n8n\n  throw new Error(`A IA não enviou um JSON válido para os itens. Texto recebido: ${itemsString}`);\n}\n\n// 3. Retorna os itens formatados para o nó do Postgres\nreturn itemsArray.map(item => {\n  return {\n    json: {\n      orderId: orderId,\n      productId: item.productId,\n      quantity: item.quantity,\n      price: item.price\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        256,
+        32
+      ],
+      "id": "eb31c6e0-32d7-44b9-9f36-94c1efb53c32",
+      "name": "Code in JavaScript"
     }
   ],
   "pinData": {
     "Execute Workflow Trigger": [
       {
         "json": {
-          "total": "5.00",
-          "items": "1 Coca-Cola",
+          "total": "30.50",
+          "items": "1 X-Burger, 1 Coca-Cola",
           "phone": "5521984870401",
-          "adress": "Rua dos Bobos, Número 0, CEP 3455213",
+          "adress": "Rua X dos Palmares, Traço Y, Bloco 4",
           "payment_method": "Dinheiro",
           "observations": ""
-        },
-        "pairedItem": {
-          "item": 0
         }
       }
     ]
@@ -176,7 +189,7 @@
       "main": [
         [
           {
-            "node": "Insert Order Items",
+            "node": "Code in JavaScript",
             "type": "main",
             "index": 0
           }
@@ -204,6 +217,17 @@
           }
         ]
       ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Insert Order Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": true,
@@ -212,7 +236,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "40633133-20a4-4152-8dde-0ed2a7e1f85a",
+  "versionId": "ddab4b9a-39df-4f64-aff3-542ec1bf0ce8",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "2044af69e344f81c84b76e58ece76b8096dfa52fd7c7b82b6c6f31bcf7767523"
