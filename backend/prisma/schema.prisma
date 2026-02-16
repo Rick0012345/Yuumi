@@ -15,6 +15,22 @@ model User {
   role      Role     @default(COOK)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
+  // Campos de localização para entregadores
+  currentLat         Float?
+  currentLng         Float?
+  lastLocationUpdate DateTime?
+  locationHistory    LocationHistory[]
+  orders             Order[]  @relation("DriverOrders")
+}
+
+model LocationHistory {
+  id        Int      @id @default(autoincrement())
+  driverId  Int
+  lat       Float
+  lng       Float
+  timestamp DateTime @default(now())
+  driver    User     @relation(fields: [driverId], references: [id])
 }
 
 model Category {
@@ -49,6 +65,8 @@ model Order {
   customer_name  String?
   payment_method String?
   observations   String?
+  driverId       Int?
+  driver         User?       @relation("DriverOrders", fields: [driverId], references: [id])
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt
   items          OrderItem[]

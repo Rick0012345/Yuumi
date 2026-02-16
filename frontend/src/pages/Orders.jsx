@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react';
 import api from '../api';
-import { Search, Filter, RefreshCw, Eye, Truck, CheckCircle, Clock } from 'lucide-react';
+import { Search, Filter, RefreshCw, Eye, Truck, CheckCircle, Clock, UserPlus } from 'lucide-react';
 import OrderDetailsModal from '../components/OrderDetailsModal';
 import { getStatusColor, getStatusLabel } from '../utils/status';
 
 export default function Orders() {
   const [orders, setOrders] = useState([]);
+  const [drivers, setDrivers] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('ALL');
   const [searchTerm, setSearchTerm] = useState('');
+  const [assigningOrder, setAssigningOrder] = useState(null); // ID do pedido sendo atribuído
 
   useEffect(() => {
     fetchOrders();
+    fetchDrivers();
 
     const intervalId = setInterval(() => {
       fetchOrders(false); // Silent update
@@ -20,6 +23,15 @@ export default function Orders() {
 
     return () => clearInterval(intervalId);
   }, []);
+
+  async function fetchDrivers() {
+      try {
+          const res = await api.get('/drivers');
+          setDrivers(res.data);
+      } catch (e) {
+          console.error("Erro ao buscar entregadores", e);
+      }
+  }
 
   async function fetchOrders(showLoading = true) {
     if (showLoading) setLoading(true);
@@ -41,6 +53,18 @@ export default function Orders() {
       console.error('Erro ao atualizar status:', error);
       alert('Não foi possível atualizar o status.');
     }
+  }
+
+  async function assignDriver(orderId, driverId) {
+      if (!driverId) return;
+      try {
+          await api.patch(`/orders/${orderId}/assign`, { driverId });
+          setAssigningOrder(null);
+          fetchOrders(false);
+      } catch (error) {
+          console.error('Erro ao atribuir entregador:', error);
+          alert('Erro ao atribuir entregador');
+      }
   }
 
   const filteredOrders = orders.filter(order => {
@@ -111,6 +135,7 @@ export default function Orders() {
                   <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-300">Itens</th>
                   <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-300">Total</th>
                   <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-300">Status</th>
+                  <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-300">Entregador</th>
                   <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-300">Data</th>
                   <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-300 text-right">Ações</th>
                 </tr>
@@ -144,6 +169,37 @@ export default function Orders() {
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(order.status)}`}>
                         {getStatusLabel(order.status)}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-sm" onClick={(e) => e.stopPropagation()}>
+                        {assigningOrder === order.id ? (
+                             <select 
+                                autoFocus
+                                className="p-1 text-sm border rounded dark:bg-slate-700 dark:text-white"
+                                onChange={(e) => assignDriver(order.id, e.target.value)}
+                                onBlur={() => setAssigningOrder(null)}
+                                defaultValue=""
+                             >
+                                 <option value="" disabled>Selecione...</option>
+                                 {drivers.map(d => (
+                                     <option key={d.id} value={d.id}>{d.name}</option>
+                                 ))}
+                             </select>
+                        ) : (
+                            <div className="flex items-center gap-2">
+                                <span className="text-slate-600 dark:text-slate-300">
+                                    {order.driver_name || '-'}
+                                </span>
+                                {(order.status === 'READY' || order.status === 'PREPARING') && (
+                                    <button 
+                                        onClick={() => setAssigningOrder(order.id)}
+                                        className="text-indigo-500 hover:text-indigo-700 p-1"
+                                        title="Atribuir Entregador"
+                                    >
+                                        <UserPlus size={16} />
+                                    </button>
+                                )}
+                            </div>
+                        )}
                     </td>
                     <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
                       {new Date(order.created_at).toLocaleString('pt-BR')}

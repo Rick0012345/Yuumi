@@ -6,6 +6,8 @@ import Dashboard from './pages/Dashboard';
 import Menu from './pages/Menu';
 import Orders from './pages/Orders';
 import Users from './pages/Users';
+import DeliveryMode from './pages/DeliveryMode';
+import DeliveryMap from './pages/DeliveryMap';
 
 function App() {
   return (
@@ -22,6 +24,11 @@ function App() {
 
         <Route element={<ProtectedRoute roles={['ADMIN', 'MANAGER']} />}>
           <Route path="/usuarios" element={<Users />} />
+          <Route path="/mapa-entregadores" element={<DeliveryMap />} />
+        </Route>
+
+        <Route element={<ProtectedRoute roles={['DRIVER', 'ADMIN']} />}>
+          <Route path="/entregador" element={<DeliveryMode />} />
         </Route>
       </Route>
     </Routes>

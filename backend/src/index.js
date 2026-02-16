@@ -252,6 +252,9 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
           include: {
             product: true
           }
+        },
+        driver: {
+          select: { id: true, name: true }
         }
       },
       orderBy: {
@@ -263,7 +266,8 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
     const formattedOrders = orders.map(order => ({
       ...order,
       created_at: order.createdAt, // Frontend expects snake_case from Supabase habits
-      customer_name: order.customer_name || 'Cliente' // Use actual customer name or fallback
+      customer_name: order.customer_name || 'Cliente', // Use actual customer name or fallback
+      driver_name: order.driver?.name
     }));
 
     res.json(formattedOrders);
@@ -271,6 +275,79 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
     console.error('Error fetching orders:', error);
     res.status(500).json({ error: 'Error fetching orders' });
   }
+});
+
+app.patch('/api/orders/:id/assign', authenticateToken, authorizeRole(['ADMIN', 'MANAGER']), async (req, res) => {
+    const { id } = req.params;
+    const { driverId } = req.body;
+
+    if (!driverId) {
+        return res.status(400).json({ error: 'Driver ID is required' });
+    }
+
+    try {
+        // Verificar se o driver existe e é um DRIVER
+        const driver = await prisma.user.findUnique({ where: { id: parseInt(driverId) } });
+        if (!driver || driver.role !== 'DRIVER') {
+            return res.status(400).json({ error: 'Invalid driver' });
+        }
+
+        const order = await prisma.order.update({
+            where: { id: parseInt(id) },
+            data: { driverId: parseInt(driverId), status: 'DELIVERING' }, // Já muda para DELIVERING ao atribuir
+            include: { driver: { select: { name: true } } }
+        });
+        
+        res.json({ ...order, driver_name: order.driver.name });
+    } catch (error) {
+        console.error('Error assigning driver:', error);
+        res.status(400).json({ error: 'Error assigning driver' });
+    }
+});
+
+app.get('/api/drivers', authenticateToken, authorizeRole(['ADMIN', 'MANAGER']), async (req, res) => {
+    try {
+        const drivers = await prisma.user.findMany({
+            where: { role: 'DRIVER' },
+            select: { 
+                id: true, 
+                name: true, 
+                email: true,
+                currentLat: true,
+                currentLng: true,
+                lastLocationUpdate: true
+            }
+        });
+        res.json(drivers);
+    } catch (error) {
+        console.error('Error fetching drivers:', error);
+        res.status(500).json({ error: 'Error fetching drivers' });
+    }
+});
+
+app.get('/api/orders/my-deliveries', authenticateToken, authorizeRole(['DRIVER']), async (req, res) => {
+    try {
+        const orders = await prisma.order.findMany({
+            where: { driverId: req.user.id, status: { in: ['DELIVERING', 'READY'] } },
+            include: {
+                items: {
+                    include: { product: true }
+                }
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+        
+        const formattedOrders = orders.map(order => ({
+            ...order,
+            created_at: order.createdAt,
+            customer_name: order.customer_name || 'Cliente'
+        }));
+
+        res.json(formattedOrders);
+    } catch (error) {
+        console.error('Error fetching my deliveries:', error);
+        res.status(500).json({ error: 'Error fetching deliveries' });
+    }
 });
 
 app.post('/api/orders', async (req, res) => {

@@ -1,7 +1,7 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import { LayoutDashboard, ShoppingBag, UtensilsCrossed, Users, Settings, LogOut, Menu, Moon, Sun } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, UtensilsCrossed, Users, Settings, LogOut, Menu, Moon, Sun, Map, Bike } from 'lucide-react';
 import { useState } from 'react';
 
 const SidebarItem = ({ icon, label, to, active, isOpen }) => (
@@ -46,7 +46,14 @@ export default function Layout() {
           <SidebarItem icon={<UtensilsCrossed size={20} />} label="Cardápio" to="/cardapio" active={location.pathname === '/cardapio'} isOpen={isSidebarOpen} />
           
           {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
-             <SidebarItem icon={<Users size={20} />} label="Usuários" to="/usuarios" active={location.pathname === '/usuarios'} isOpen={isSidebarOpen} />
+            <>
+              <SidebarItem icon={<Users size={20} />} label="Usuários" to="/usuarios" active={location.pathname === '/usuarios'} isOpen={isSidebarOpen} />
+              <SidebarItem icon={<Map size={20} />} label="Mapa Entregadores" to="/mapa-entregadores" active={location.pathname === '/mapa-entregadores'} isOpen={isSidebarOpen} />
+            </>
+          )}
+
+          {(user?.role === 'ADMIN' || user?.role === 'DRIVER') && (
+            <SidebarItem icon={<Bike size={20} />} label="Modo Entregador" to="/entregador" active={location.pathname === '/entregador'} isOpen={isSidebarOpen} />
           )}
           
           <SidebarItem icon={<Settings size={20} />} label="Configurações" to="/config" active={location.pathname === '/config'} isOpen={isSidebarOpen} />
