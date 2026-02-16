@@ -38,7 +38,11 @@ const authenticateToken = (req, res, next) => {
   if (!token) return res.sendStatus(401);
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
-    if (err) return res.sendStatus(403);
+    if (err) {
+      console.log("JWT verify error:", err);
+      return res.sendStatus(403);
+    }
+    console.log("JWT decoded user:", user);
     req.user = user;
     next();
   });
@@ -47,6 +51,7 @@ const authenticateToken = (req, res, next) => {
 // Middleware de Role
 const authorizeRole = (roles) => {
   return (req, res, next) => {
+    console.log("AuthorizeRole - User role:", req.user?.role, "Required roles:", roles);
     if (!roles.includes(req.user.role)) {
       return res.status(403).json({ error: 'Access denied' });
     }

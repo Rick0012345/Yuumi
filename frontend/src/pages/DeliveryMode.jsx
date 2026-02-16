@@ -12,11 +12,16 @@ const DeliveryMode = () => {
   const [watchId, setWatchId] = useState(null);
   const [orders, setOrders] = useState([]);
 
+  console.log("User role:", user?.role); // Debug
+  console.log("Token:", localStorage.getItem('token')); // Debug
+
   useEffect(() => {
-    fetchMyDeliveries();
-    const interval = setInterval(fetchMyDeliveries, 10000);
-    return () => clearInterval(interval);
-  }, []);
+    if (user?.role === 'DRIVER') {
+      fetchMyDeliveries();
+      const interval = setInterval(fetchMyDeliveries, 10000);
+      return () => clearInterval(interval);
+    }
+  }, [user?.role]);
 
   async function fetchMyDeliveries() {
       try {
@@ -58,22 +63,22 @@ const DeliveryMode = () => {
         (pos) => {
           const { latitude, longitude } = pos.coords;
           setPosition({ lat: latitude, lng: longitude });
-          // Enviar via WebSocket
+          // Verificar se user existe e é DRIVER
           if (user?.role === 'DRIVER') {
-             // O LocationContext já verifica se o WS está aberto
-             // Mas precisamos garantir que a função sendLocation exista
              try {
-                // enviar via contexto (que usa o WS)
-                // O contexto expõe sendLocation(lat, lng)
-                // Vamos assumir que o contexto foi importado corretamente
-                // Mas espere, eu preciso importar sendLocation do hook useLocation
+                // Verificar se sendLocation é uma função antes de chamar
+                if (typeof sendLocation === 'function') {
+                    sendLocation(latitude, longitude);
+                } else {
+                    console.warn("sendLocation não está disponível ou não é uma função");
+                }
              } catch (e) {
-                console.error(e);
+                console.error("Erro ao enviar localização:", e);
              }
           }
         },
-        (err) => console.error(err),
-        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+        (err) => console.error("Erro de geolocalização:", err),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
       setWatchId(id);
       setIsTracking(true);

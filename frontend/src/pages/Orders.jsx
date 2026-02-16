@@ -3,8 +3,10 @@ import api from '../api';
 import { Search, Filter, RefreshCw, Eye, Truck, CheckCircle, Clock, UserPlus } from 'lucide-react';
 import OrderDetailsModal from '../components/OrderDetailsModal';
 import { getStatusColor, getStatusLabel } from '../utils/status';
+import { useAuth } from '../context/AuthContext';
 
 export default function Orders() {
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [drivers, setDrivers] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
@@ -15,14 +17,16 @@ export default function Orders() {
 
   useEffect(() => {
     fetchOrders();
-    fetchDrivers();
+    if (user?.role === 'ADMIN' || user?.role === 'MANAGER') {
+        fetchDrivers();
+    }
 
     const intervalId = setInterval(() => {
       fetchOrders(false); // Silent update
     }, 5000);
 
     return () => clearInterval(intervalId);
-  }, []);
+  }, [user]);
 
   async function fetchDrivers() {
       try {
