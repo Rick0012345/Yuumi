@@ -163,12 +163,16 @@
     "Execute Workflow Trigger": [
       {
         "json": {
-          "total": "30.50",
-          "items": "1 X-Burger, 1 Coca-Cola",
+          "total": "18",
+          "items": "[{\"productId\": 3, \"quantity\": 1, \"price\": 3},{\"productId\": 2, \"quantity\": 3, \"price\": 5}]",
           "phone": "5521984870401",
-          "adress": "Rua X dos Palmares, Traço Y, Bloco 4",
-          "payment_method": "Dinheiro",
-          "observations": ""
+          "adress": "Itaipuaçu, Rua X, Setor A",
+          "payment_method": "Pix",
+          "observations": "",
+          "customer_name": "Patrick"
+        },
+        "pairedItem": {
+          "item": 0
         }
       }
     ]
@@ -236,7 +240,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "ddab4b9a-39df-4f64-aff3-542ec1bf0ce8",
+  "versionId": "435ab882-367c-4db3-9ab1-ed506302774d",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "2044af69e344f81c84b76e58ece76b8096dfa52fd7c7b82b6c6f31bcf7767523"

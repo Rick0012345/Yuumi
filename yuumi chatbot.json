@@ -1,0 +1,578 @@
+{
+  "name": "yuumi chatbot",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "CREATE TABLE IF NOT EXISTS clientes_chatbot (id SERIAL PRIMARY KEY, phone_number VARCHAR(50) UNIQUE NOT NULL, name VARCHAR(255), created_at TIMESTAMP DEFAULT NOW(), updated_at TIMESTAMP DEFAULT NOW())",
+        "options": {}
+      },
+      "id": "ca78582a-f7ee-488a-b52e-19f62e0e5a39",
+      "name": "Create Table clientes_chatbot",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -880,
+        704
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "DELETE FROM n8n_chat_histories",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -672,
+        704
+      ],
+      "id": "f2fb7f2d-134f-4739-a6db-7c63358a4877",
+      "name": "deletar memoria do chat",
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "id": "8b97672d-cff7-4e5e-9f63-94c7f0da61a0",
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -400,
+        736
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO \"Order\" (status, total, items, address, phone, payment_method, observations, \"createdAt\", \"updatedAt\") VALUES ('PENDING', $1, $2, $3, $4, $5, $6, NOW(), NOW()) RETURNING id, status, total, \"createdAt\"",
+        "options": {
+          "queryReplacement": "={{ $json.total }},={{ $json.items || '' }},={{ $json.address || '' }},={{ $json.phone || '' }},={{ $json.payment_method || '' }},={{ $json.observations || '' }}"
+        }
+      },
+      "id": "e04533a2-38eb-41c9-b87f-3e87d1ce0cdc",
+      "name": "Insert Order to Database",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -128,
+        736
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      },
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "phoneNumber",
+              "value": "={{ $json.contacts[0].wa_id }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "userName",
+              "value": "={{ $json.contacts[0].profile?.name || 'Unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "messageText",
+              "value": "={{ $json.messages[0].text.body }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "timestamp",
+              "value": "={{ $json.messages[0].timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f2e9753d-864e-4a6a-8f18-0beaf9902b17",
+      "name": "Workflow Configuration1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1024,
+        -144
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "INSERT INTO clientes_chatbot (phone_number, name, created_at) VALUES ($1, $2, NOW()) ON CONFLICT (phone_number) DO NOTHING RETURNING *",
+        "options": {
+          "queryReplacement": "={{ [$json.phoneNumber, $json.userName] }}"
+        }
+      },
+      "id": "656788e5-2a68-4505-a094-6eab2ce98d49",
+      "name": "Check and Save User1",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -800,
+        -144
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "temperature": 0.6
+        }
+      },
+      "id": "4e9845b1-8e95-4bd5-a6d9-640fa5db1a51",
+      "name": "OpenAI Chat Model1",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -512,
+        128
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "svKHhCQfIv3yGCjt",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Workflow Configuration1').item.json.phoneNumber }}",
+        "contextWindowLength": 30
+      },
+      "id": "bfb4654d-e376-4580-88c7-7d0b6649135b",
+      "name": "Postgres Chat Memory1",
+      "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
+      "typeVersion": 1.3,
+      "position": [
+        -320,
+        128
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "send",
+        "phoneNumberId": "1001163339739167",
+        "recipientPhoneNumber": "={{ $('Workflow Configuration1').item.json.phoneNumber }}",
+        "textBody": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "id": "88ee5239-3d11-46ff-9f6e-ca829dac1f67",
+      "name": "Send WhatsApp Response1",
+      "type": "n8n-nodes-base.whatsApp",
+      "typeVersion": 1.1,
+      "position": [
+        304,
+        -144
+      ],
+      "webhookId": "7777ae7b-27d2-4820-b44e-c1c32fd70b85",
+      "retryOnFail": true,
+      "credentials": {
+        "whatsAppApi": {
+          "id": "wvoYuCni8NhdJa3Z",
+          "name": "WhatsApp account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Cria um novo pedido. OBRIGATÓRIO: total. O campo 'items' DEVE ser OBRIGATORIAMENTE uma string de um array JSON com os IDs. Exemplo estrito: [{\\\"productId\\\": 1, \\\"quantity\\\": 2, \\\"price\\\": 25.5}]",
+        "workflowId": {
+          "__rl": true,
+          "value": "TjRavnsWhOXHfm-aCmaq-",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/TjRavnsWhOXHfm-aCmaq-",
+          "cachedResultName": "sub-workflow-insert"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "total": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('total', ``, 'string') }}",
+            "items": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('items', ``, 'string') }}",
+            "phone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('phone', ``, 'string') }}",
+            "adress": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('adress', ``, 'string') }}",
+            "payment_method": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('payment_method', ``, 'string') }}",
+            "observations": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('observations', ``, 'string') }}",
+            "customer_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('customer_name', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "total",
+              "displayName": "total",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "items",
+              "displayName": "items",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "displayName": "phone",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "adress",
+              "displayName": "adress",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "payment_method",
+              "displayName": "payment_method",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "observations",
+              "displayName": "observations",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "id": "5a7dc790-8035-4c99-87af-9af62eebcd52",
+      "name": "Create Order Workflow Tool1",
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        -160,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, name, description, price, available, \"categoryId\" FROM \"Product\" WHERE available = true ORDER BY name",
+        "options": {}
+      },
+      "id": "04cd15b9-6f10-47d7-8bbd-9c7432d24b51",
+      "name": "Get Products List",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -576,
+        -144
+      ],
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "messages"
+        ],
+        "options": {}
+      },
+      "id": "39cdf563-8494-4c79-8327-988c48f61680",
+      "name": "WhatsApp Trigger",
+      "type": "n8n-nodes-base.whatsAppTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1248,
+        -144
+      ],
+      "webhookId": "dd223e09-9439-4568-828e-539c4f19c07b",
+      "retryOnFail": true,
+      "credentials": {
+        "whatsAppTriggerApi": {
+          "id": "Zt5oKx6MYHpcKdNo",
+          "name": "WhatsApp OAuth account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Workflow Configuration1').item.json.messageText }}",
+        "options": {
+          "systemMessage": "=[Role: Vendas WhatsApp]\n[Lang: pt-BR]\n[Tone: Amigável, educado, claro]\n\n[Dados do Cliente]\nNome: {{ $('Workflow Configuration1').item.json.userName }}\nTelefone: {{ $('Workflow Configuration1').item.json.phoneNumber }}\n\nIMPORTANTE: Ao criar o pedido, você DEVE passar o nome do cliente (customer_name) que já está salvo no banco de dados clientes_chatbot. Use o nome: {{ $('Workflow Configuration1').item.json.userName }}\n\n[Menu]\n{{ $('Get Products List').all().map(item => `[ID:${item.json.id}|${item.json.name}|R$${item.json.price}|${item.json.description}]`).join('\\n') }}\n\n[Flow]\n1. Se for a primeira mensagem da conversa: Saude pelo [Nome] e apresente o [Menu] com os preços.\n2. Nas mensagens seguintes: NÃO repita a saudação. Aja de forma natural, direta e continue o atendimento com base no histórico.\n3. Ajude a definir itens e quantidades.\n4. Calcule o 'total'.\n5. Colete endereço de entrega e método de pagamento.\n6. Pedido 100% confirmado pelo cliente? Call tool 'Create Order Workflow Tool1'."
+        }
+      },
+      "id": "e2595fd1-dea1-48a1-972a-bbf9d20f0451",
+      "name": "AI Agent1",
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -144,
+        -144
+      ],
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        -144
+      ],
+      "id": "df5548a0-25f0-400b-8809-66c2054e570c",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        80,
+        128
+      ],
+      "id": "e0ae61b7-4ad5-48d5-9919-ad04693545e5",
+      "name": "Calculator"
+    }
+  ],
+  "pinData": {
+    "WhatsApp Trigger": [
+      {
+        "json": {
+          "messaging_product": "whatsapp",
+          "metadata": {
+            "display_phone_number": "5521991843847",
+            "phone_number_id": "1001163339739167"
+          },
+          "contacts": [
+            {
+              "profile": {
+                "name": "Patrick"
+              },
+              "wa_id": "5521984870401"
+            }
+          ],
+          "messages": [
+            {
+              "from": "5521984870401",
+              "id": "wamid.HBgNNTUyMTk4NDg3MDQwMRUCABIYIEFDMDA3MUQ3QTk3NEMyRDVGMDRBNEY0Mjk0NUIzNjg4AA==",
+              "timestamp": "1771020499",
+              "text": {
+                "body": "sim"
+              },
+              "type": "text"
+            }
+          ],
+          "field": "messages"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Insert Order to Database",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Workflow Configuration1": {
+      "main": [
+        [
+          {
+            "node": "Check and Save User1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check and Save User1": {
+      "main": [
+        [
+          {
+            "node": "Get Products List",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Postgres Chat Memory1": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Order Workflow Tool1": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Products List": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "WhatsApp Trigger": {
+      "main": [
+        [
+          {
+            "node": "Workflow Configuration1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent1": {
+      "main": [
+        [
+          {
+            "node": "Send WhatsApp Response1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "f2281eb4-520d-4027-a67a-a13353d1692b",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2044af69e344f81c84b76e58ece76b8096dfa52fd7c7b82b6c6f31bcf7767523"
+  },
+  "id": "AqOJLISR9YPOaEMkGGzLw",
+  "tags": []
+}
