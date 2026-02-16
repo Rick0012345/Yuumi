@@ -46,6 +46,7 @@ model Order {
   total          Float
   address        String?
   phone          String?
+  customer_name  String?
   payment_method String?
   observations   String?
   createdAt      DateTime    @default(now())

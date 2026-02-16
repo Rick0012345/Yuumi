@@ -111,13 +111,13 @@
         },
         "options": {}
       },
-      "id": "db06302b-771b-469f-93c5-7d9bc3430dc9",
+      "id": "f2e9753d-864e-4a6a-8f18-0beaf9902b17",
       "name": "Workflow Configuration1",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -928,
-        -224
+        -1024,
+        -144
       ]
     },
     {
@@ -128,13 +128,13 @@
           "queryReplacement": "={{ [$json.phoneNumber, $json.userName] }}"
         }
       },
-      "id": "d77f3106-3f41-4db3-ba64-8804cadec69f",
+      "id": "656788e5-2a68-4505-a094-6eab2ce98d49",
       "name": "Check and Save User1",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -704,
-        -224
+        -800,
+        -144
       ],
       "credentials": {
         "postgres": {
@@ -156,13 +156,13 @@
           "temperature": 0.6
         }
       },
-      "id": "b3ba2560-8907-4e4c-a0b1-78815bacf993",
+      "id": "4e9845b1-8e95-4bd5-a6d9-640fa5db1a51",
       "name": "OpenAI Chat Model1",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -416,
-        48
+        -512,
+        128
       ],
       "credentials": {
         "openAiApi": {
@@ -177,13 +177,13 @@
         "sessionKey": "={{ $('Workflow Configuration1').item.json.phoneNumber }}",
         "contextWindowLength": 30
       },
-      "id": "6ce49a78-d68b-45b1-9425-e7f9d9181e01",
+      "id": "bfb4654d-e376-4580-88c7-7d0b6649135b",
       "name": "Postgres Chat Memory1",
       "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
       "typeVersion": 1.3,
       "position": [
-        -224,
-        48
+        -320,
+        128
       ],
       "credentials": {
         "postgres": {
@@ -200,15 +200,16 @@
         "textBody": "={{ $json.output }}",
         "additionalFields": {}
       },
-      "id": "4da12b65-4d91-46f7-8b0c-31ec0daf705c",
+      "id": "88ee5239-3d11-46ff-9f6e-ca829dac1f67",
       "name": "Send WhatsApp Response1",
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        192,
-        -224
+        304,
+        -144
       ],
       "webhookId": "7777ae7b-27d2-4820-b44e-c1c32fd70b85",
+      "retryOnFail": true,
       "credentials": {
         "whatsAppApi": {
           "id": "wvoYuCni8NhdJa3Z",
@@ -218,7 +219,7 @@
     },
     {
       "parameters": {
-        "description": "Cria um novo pedido no banco de dados. OBRIGATÓRIO: total (valor numérico). OPCIONAIS: items, address, phone, payment_method, observations.",
+        "description": "Cria um novo pedido. OBRIGATÓRIO: total. O campo 'items' DEVE ser OBRIGATORIAMENTE uma string de um array JSON com os IDs. Exemplo estrito: [{\\\"productId\\\": 1, \\\"quantity\\\": 2, \\\"price\\\": 25.5}]",
         "workflowId": {
           "__rl": true,
           "value": "TjRavnsWhOXHfm-aCmaq-",
@@ -234,7 +235,8 @@
             "phone": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('phone', ``, 'string') }}",
             "adress": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('adress', ``, 'string') }}",
             "payment_method": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('payment_method', ``, 'string') }}",
-            "observations": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('observations', ``, 'string') }}"
+            "observations": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('observations', ``, 'string') }}",
+            "customer_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('customer_name', ``, 'string') }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -291,19 +293,28 @@
               "display": true,
               "canBeUsedToMatch": true,
               "type": "string"
+            },
+            {
+              "id": "customer_name",
+              "displayName": "customer_name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
             }
           ],
           "attemptToConvertTypes": false,
           "convertFieldsToString": false
         }
       },
-      "id": "35cf82c7-3052-4f8c-b834-6c622bc73f7a",
+      "id": "5a7dc790-8035-4c99-87af-9af62eebcd52",
       "name": "Create Order Workflow Tool1",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -64,
-        48
+        -160,
+        128
       ]
     },
     {
@@ -312,13 +323,13 @@
         "query": "SELECT id, name, description, price, available, \"categoryId\" FROM \"Product\" WHERE available = true ORDER BY name",
         "options": {}
       },
-      "id": "ab83534a-c8fc-4def-ae1d-08d5be3e3d6e",
+      "id": "04cd15b9-6f10-47d7-8bbd-9c7432d24b51",
       "name": "Get Products List",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -480,
-        -224
+        -576,
+        -144
       ],
       "credentials": {
         "postgres": {
@@ -334,15 +345,16 @@
         ],
         "options": {}
       },
-      "id": "53497f54-3587-4cc9-a1cd-6256849ac11a",
+      "id": "39cdf563-8494-4c79-8327-988c48f61680",
       "name": "WhatsApp Trigger",
       "type": "n8n-nodes-base.whatsAppTrigger",
       "typeVersion": 1,
       "position": [
-        -1152,
-        -224
+        -1248,
+        -144
       ],
       "webhookId": "dd223e09-9439-4568-828e-539c4f19c07b",
+      "retryOnFail": true,
       "credentials": {
         "whatsAppTriggerApi": {
           "id": "Zt5oKx6MYHpcKdNo",
@@ -352,35 +364,46 @@
     },
     {
       "parameters": {
-        "schemaType": "manual",
-        "inputSchema": "{\n\t\"type\": \"object\",\n\t\"properties\": {\n\t\t\"customerName\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n\t\t\"items\": {\n\t\t\t\"type\": \"array\",\n\t\t\t\"items\": {\n\t\t\t\t\"type\": \"object\",\n\t\t\t\t\"properties\": {\n\t\t\t\t\t\"productId\": {\n\t\t\t\t\t\t\"type\": \"string\"\n\t\t\t\t\t},\n\t\t\t\t\t\"quantity\": {\n\t\t\t\t\t\t\"type\": \"number\"\n\t\t\t\t\t},\n\t\t\t\t\t\"price\": {\n\t\t\t\t\t\t\"type\": \"number\"\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t},\n\t\t\"totalAmount\": {\n\t\t\t\"type\": \"number\"\n\t\t},\n\t\t\"deliveryAddress\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n\t\t\"phoneNumber\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n\t\t\"paymentMethod\": {\n\t\t\t\"type\": \"string\"\n\t\t},\n\t\t\"observations\": {\n\t\t\t\"type\": \"string\"\n\t\t}\n\t}\n}"
-      },
-      "id": "4640d494-80de-43b8-9cdb-0dfe2a809cd2",
-      "name": "Order Output Parser",
-      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
-      "typeVersion": 1.3,
-      "position": [
-        96,
-        64
-      ]
-    },
-    {
-      "parameters": {
         "promptType": "define",
         "text": "={{ $('Workflow Configuration1').item.json.messageText }}",
-        "hasOutputParser": true,
         "options": {
-          "systemMessage": "=Você é um assistente de vendas para um restaurante/loja via WhatsApp. Sua função é ajudar clientes a fazer pedidos de forma amigável e eficiente.\n\nPRODUTOS DISPONÍVEIS:\n{{ $('Get Products List').all().map(item => `${item.json.name} - R$ ${item.json.price} - ${item.json.description}`).join('\\n') }}\n\nINSTRUÇÕES:\n1) Cumprimente o cliente pelo nome quando disponível.\n2) Apresente os produtos disponíveis de forma clara.\n3) Ajude o cliente a escolher produtos e quantidades.\n4) Confirme o endereço de entrega e forma de pagamento.\n5) Quando o cliente confirmar o pedido completo, use a ferramenta Create Order para registrar.\n6) Seja sempre educado, claro e prestativo.\n7) Responda em português brasileiro."
+          "systemMessage": "=[Role: Vendas WhatsApp]\n[Lang: pt-BR]\n[Tone: Amigável, educado, claro]\n\n[Dados do Cliente]\nNome: {{ $('Workflow Configuration1').item.json.userName }}\nTelefone: {{ $('Workflow Configuration1').item.json.phoneNumber }}\n\nIMPORTANTE: Ao criar o pedido, você DEVE passar o nome do cliente (customer_name) que já está salvo no banco de dados clientes_chatbot. Use o nome: {{ $('Workflow Configuration1').item.json.userName }}\n\n[Menu]\n{{ $('Get Products List').all().map(item => `[ID:${item.json.id}|${item.json.name}|R$${item.json.price}|${item.json.description}]`).join('\\n') }}\n\n[Flow]\n1. Se for a primeira mensagem da conversa: Saude pelo [Nome] e apresente o [Menu] com os preços.\n2. Nas mensagens seguintes: NÃO repita a saudação. Aja de forma natural, direta e continue o atendimento com base no histórico.\n3. Ajude a definir itens e quantidades.\n4. Calcule o 'total'.\n5. Colete endereço de entrega e método de pagamento.\n6. Pedido 100% confirmado pelo cliente? Call tool 'Create Order Workflow Tool1'."
         }
       },
-      "id": "20527f43-a4ae-4f16-b623-88a1162ee907",
+      "id": "e2595fd1-dea1-48a1-972a-bbf9d20f0451",
       "name": "AI Agent1",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        -256,
-        -224
-      ]
+        -144,
+        -144
+      ],
+      "retryOnFail": true
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -368,
+        -144
+      ],
+      "id": "df5548a0-25f0-400b-8809-66c2054e570c",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        80,
+        128
+      ],
+      "id": "e0ae61b7-4ad5-48d5-9919-ad04693545e5",
+      "name": "Calculator"
     }
   ],
   "pinData": {
@@ -487,7 +510,7 @@
       "main": [
         [
           {
-            "node": "AI Agent1",
+            "node": "Aggregate",
             "type": "main",
             "index": 0
           }
@@ -505,23 +528,34 @@
         ]
       ]
     },
-    "Order Output Parser": {
-      "ai_outputParser": [
-        [
-          {
-            "node": "AI Agent1",
-            "type": "ai_outputParser",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "AI Agent1": {
       "main": [
         [
           {
             "node": "Send WhatsApp Response1",
             "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent1",
+            "type": "ai_tool",
             "index": 0
           }
         ]
@@ -534,7 +568,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "85677867-4c58-429e-90c0-d64f495fed15",
+  "versionId": "f2281eb4-520d-4027-a67a-a13353d1692b",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "2044af69e344f81c84b76e58ece76b8096dfa52fd7c7b82b6c6f31bcf7767523"

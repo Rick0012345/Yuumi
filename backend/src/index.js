@@ -263,7 +263,7 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
     const formattedOrders = orders.map(order => ({
       ...order,
       created_at: order.createdAt, // Frontend expects snake_case from Supabase habits
-      customer_name: null // Schema doesn't have customer name yet
+      customer_name: order.customer_name || 'Cliente' // Use actual customer name or fallback
     }));
 
     res.json(formattedOrders);
@@ -275,7 +275,7 @@ app.get('/api/orders', authenticateToken, async (req, res) => {
 
 app.post('/api/orders', async (req, res) => {
   // Public endpoint for creating orders (e.g. from a kiosk or app)
-  const { items, address, phone, payment_method, observations } = req.body; // items: [{ productId, quantity }]
+  const { items, address, phone, customer_name, payment_method, observations } = req.body; // items: [{ productId, quantity }]
   
   if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Items are required' });
@@ -307,6 +307,7 @@ app.post('/api/orders', async (req, res) => {
         total,
         address,
         phone,
+        customer_name,
         payment_method,
         observations,
         items: {
