@@ -8,6 +8,7 @@ import Orders from './pages/Orders';
 import Users from './pages/Users';
 import DeliveryMode from './pages/DeliveryMode';
 import DeliveryMap from './pages/DeliveryMap';
+import SettingsPage from './pages/Settings';
 
 function App() {
   return (
@@ -19,7 +20,7 @@ function App() {
           <Route path="/" element={<Dashboard />} />
           <Route path="/pedidos" element={<Orders />} />
           <Route path="/cardapio" element={<Menu />} />
-          <Route path="/config" element={<div className="text-slate-500">Configurações em construção</div>} />
+          <Route path="/config" element={<SettingsPage />} />
         </Route>
 
         <Route element={<ProtectedRoute roles={['ADMIN', 'MANAGER']} />}>

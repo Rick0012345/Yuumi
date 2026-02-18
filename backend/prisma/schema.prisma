@@ -22,6 +22,32 @@ model User {
   lastLocationUpdate DateTime?
   locationHistory    LocationHistory[]
   orders             Order[]  @relation("DriverOrders")
+  settings           UserSettings?
+  notificationSettings NotificationSettings?
+  sessions           UserSession[]
+  auditLogs          AuditLog[]
+}
+
+model UserSession {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  token     String   @unique
+  userAgent String?
+  ipAddress String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int?
+  action    String
+  resource  String
+  details   Json?
+  ipAddress String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 
 model LocationHistory {
@@ -94,6 +120,41 @@ model n8n_chat_histories {
   id         Int    @id @default(autoincrement())
   session_id String @db.VarChar(255)
   message    Json
+}
+
+model UserSettings {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @unique
+  theme             String   @default("system") // light, dark, system
+  language          String   @default("pt-BR")
+  fontSize          String   @default("medium") // small, medium, large
+  twoFactorEnabled  Boolean  @default(false)
+  emailNotifications Boolean @default(true)
+  pushNotifications Boolean  @default(true)
+  orderNotifications Boolean  @default(true)
+  cacheEnabled      Boolean  @default(true)
+  imageQuality      String   @default("high") // low, medium, high
+  offlineMode       Boolean  @default(false)
+  dataSharing       Boolean  @default(false)
+  analyticsEnabled  Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model NotificationSettings {
+  id                Int      @id @default(autoincrement())
+  userId            Int      @unique
+  emailFrequency    String   @default("immediate") // immediate, daily, weekly, never
+  pushFrequency     String   @default("immediate")
+  soundEnabled      Boolean  @default(true)
+  vibrationEnabled  Boolean  @default(true)
+  quietHoursEnabled Boolean  @default(false)
+  quietHoursStart   String?  @db.VarChar(5) // HH:MM format
+  quietHoursEnd     String?  @db.VarChar(5) // HH:MM format
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 enum Role {
