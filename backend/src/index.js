@@ -113,6 +113,108 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
   }
 });
 
+// --- SETTINGS ROUTES ---
+
+app.get('/api/settings', authenticateToken, async (req, res) => {
+  try {
+    let userSettings = await prisma.userSettings.findUnique({
+      where: { userId: req.user.id }
+    });
+    
+    let notificationSettings = await prisma.notificationSettings.findUnique({
+      where: { userId: req.user.id }
+    });
+
+    // Se não existirem, cria padrões
+    if (!userSettings) {
+        userSettings = await prisma.userSettings.create({ data: { userId: req.user.id } });
+    }
+    if (!notificationSettings) {
+        notificationSettings = await prisma.notificationSettings.create({ data: { userId: req.user.id } });
+    }
+
+    res.json({
+      ...userSettings,
+      notifications: notificationSettings
+    });
+  } catch (error) {
+    console.error('Error fetching settings:', error);
+    res.status(500).json({ error: 'Error fetching settings' });
+  }
+});
+
+app.put('/api/settings', authenticateToken, async (req, res) => {
+  const { 
+    theme, language, fontSize, 
+    emailNotifications, pushNotifications, orderNotifications,
+    notifications // nested object for notification settings
+  } = req.body;
+
+  try {
+    // Update General Settings
+    const updatedSettings = await prisma.userSettings.upsert({
+      where: { userId: req.user.id },
+      update: {
+        theme,
+        language,
+        fontSize,
+        emailNotifications,
+        pushNotifications,
+        orderNotifications
+      },
+      create: {
+        userId: req.user.id,
+        theme,
+        language,
+        fontSize,
+        emailNotifications,
+        pushNotifications,
+        orderNotifications
+      }
+    });
+
+    // Update Notification Settings if provided
+    let updatedNotifications = null;
+    if (notifications) {
+      updatedNotifications = await prisma.notificationSettings.upsert({
+        where: { userId: req.user.id },
+        update: {
+          emailFrequency: notifications.emailFrequency,
+          pushFrequency: notifications.pushFrequency,
+          soundEnabled: notifications.soundEnabled,
+          vibrationEnabled: notifications.vibrationEnabled,
+          quietHoursEnabled: notifications.quietHoursEnabled,
+          quietHoursStart: notifications.quietHoursStart,
+          quietHoursEnd: notifications.quietHoursEnd
+        },
+        create: {
+          userId: req.user.id,
+          emailFrequency: notifications.emailFrequency,
+          pushFrequency: notifications.pushFrequency,
+          soundEnabled: notifications.soundEnabled,
+          vibrationEnabled: notifications.vibrationEnabled,
+          quietHoursEnabled: notifications.quietHoursEnabled,
+          quietHoursStart: notifications.quietHoursStart,
+          quietHoursEnd: notifications.quietHoursEnd
+        }
+      });
+    } else {
+        // Fetch existing if not updated
+        updatedNotifications = await prisma.notificationSettings.findUnique({
+            where: { userId: req.user.id }
+        });
+    }
+
+    res.json({
+      ...updatedSettings,
+      notifications: updatedNotifications
+    });
+  } catch (error) {
+    console.error('Error updating settings:', error);
+    res.status(500).json({ error: 'Error updating settings' });
+  }
+});
+
 // --- USER ROUTES ---
 
 app.get('/api/users', authenticateToken, authorizeRole(['ADMIN', 'MANAGER']), async (req, res) => {
