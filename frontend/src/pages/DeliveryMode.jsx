@@ -154,22 +154,22 @@ const DeliveryMode = () => {
                             ))}
                         </ul>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                         {order.address && (
                             <a 
                                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.address)}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex-1 bg-blue-500 text-white py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-bold"
+                                className="flex-1 min-w-[120px] bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition-colors"
                             >
-                                <Navigation size={16} /> Navegar
+                                <Navigation size={18} /> Navegar
                             </a>
                         )}
                         <button 
                             onClick={() => completeDelivery(order.id)}
-                            className="flex-1 bg-green-500 text-white py-2 rounded-lg flex items-center justify-center gap-2 text-sm font-bold"
+                            className="flex-1 min-w-[120px] bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg flex items-center justify-center gap-2 text-sm font-bold transition-colors"
                         >
-                            <CheckCircle size={16} /> Finalizar
+                            <CheckCircle size={18} /> Finalizar
                         </button>
                     </div>
                 </div>

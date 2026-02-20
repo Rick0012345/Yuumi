@@ -1,324 +1,759 @@
 ---
-name: database-expert
-description: Database performance optimization, schema design, query analysis, and connection management across PostgreSQL, MySQL, MongoDB, and SQLite with ORM integration. Use this skill for queries, indexes, connection pooling, transactions, and database architecture decisions.
+name: responsive-styling
+description: Automatically generate mobile-first responsive CSS/SCSS when creating component styles or mentioning responsive design. Implements standard breakpoints (768px, 1024px), ensures WCAG AA color contrast, creates touch-friendly interfaces (44px minimum targets), adds proper focus indicators, supports reduced motion, scales typography responsively, and provides detailed technical specifications with exact values.
 ---
 
-# Database Expert
+# Responsive Styling Skill
 
-You are a database expert specializing in performance optimization, schema design, query analysis, and connection management across multiple database systems and ORMs.
+## Purpose
+Generate mobile-first, responsive CSS/SCSS that works across all devices and follows accessibility best practices.
 
-## Step 0: Sub-Expert Routing Assessment
+## Philosophy
 
-Before proceeding, I'll evaluate if a specialized sub-expert would be more appropriate:
+Responsive design is accessibility. Mobile-first is user-first.
 
-**PostgreSQL-specific issues** (MVCC, vacuum strategies, advanced indexing):
-→ Consider `postgres-expert` for PostgreSQL-only optimization problems
+### Core Beliefs
 
-**MongoDB document design** (aggregation pipelines, sharding, replica sets):
-→ Consider `mongodb-expert` for NoSQL-specific patterns and operations
+1. **Mobile First is Performance First**: Start with constraints, enhance progressively
+2. **Accessibility is Non-Negotiable**: WCAG AA compliance is the baseline, not a bonus
+3. **Exact Specifications Build Confidence**: Calculate exact contrast ratios, don't estimate
+4. **Touch-Friendly by Default**: 44px minimum targets prevent user frustration
 
-**Redis caching patterns** (session management, pub/sub, caching strategies):
-→ Consider `redis-expert` for cache-specific optimization
+### Why Mobile-First Responsive Styling Matters
 
-**ORM-specific optimization** (complex relationship mapping, type safety):
-→ Consider `prisma-expert` or `typeorm-expert` for ORM-specific advanced patterns
+- **User Experience**: Most users access sites on mobile devices
+- **Performance**: Smaller initial payload, enhance for larger screens
+- **Accessibility**: Ensures usability for all users and devices
+- **Professional Quality**: Shows attention to detail and best practices
 
-If none of these specialized experts are needed, I'll continue with general database expertise.
+## When This Skill Activates
 
-## Step 1: Environment Detection
+This skill automatically activates when:
+- User asks to "make it responsive"
+- User mentions breakpoints, mobile, tablet, or desktop
+- Creating styles for a component
+- User asks about media queries
+- Responsive design is needed for implementation
+- WordPress block patterns need editor styling
 
-I'll analyze your database environment to provide targeted solutions:
+## Decision Framework
 
-**Database Detection:**
-- Connection strings (postgresql://, mysql://, mongodb://, sqlite:///)
-- Configuration files (postgresql.conf, my.cnf, mongod.conf)
-- Package dependencies (prisma, typeorm, sequelize, mongoose)
-- Default ports (5432→PostgreSQL, 3306→MySQL, 27017→MongoDB)
+Before generating responsive styles, determine:
 
-**ORM/Query Builder Detection:**
-- Prisma: schema.prisma file, @prisma/client dependency
-- TypeORM: ormconfig.json, typeorm dependency
-- Sequelize: .sequelizerc, sequelize dependency
-- Mongoose: mongoose dependency for MongoDB
+### What's the Component Type?
 
-## Step 2: Problem Category Analysis
+1. **Layout container** → Focus on width, padding, grid/flex
+2. **Content block** → Focus on typography, spacing, images
+3. **Interactive element** (button, form) → Focus on touch targets, states, transitions
+4. **Navigation** → Focus on mobile menu, breakpoint behavior
+5. **Media** (images, video) → Focus on aspect ratios, object-fit
 
-I'll categorize your issue into one of six major problem areas:
+### What Are the Breakpoints?
 
-### Category 1: Query Performance & Optimization
+**Standard mobile-first breakpoints**:
+- **Base styles** (320px+) - Mobile default
+- **Tablet** (768px+) - `@media (min-width: 768px)`
+- **Desktop** (1024px+) - `@media (min-width: 1024px)`
+- **Large desktop** (1440px+) - Optional for max-width constraints
 
-**Common symptoms:**
-- Sequential scans in EXPLAIN output
-- "Using filesort" or "Using temporary" in MySQL
-- High CPU usage during queries
-- Application timeouts on database operations
+**When to add breakpoints**:
+- ✅ Layout changes significantly (columns stack/unstack)
+- ✅ Typography scales (mobile 16px → desktop 18px)
+- ✅ Touch targets adjust (mobile 44px → desktop 40px)
+- ❌ Minor pixel adjustments (avoid breakpoint bloat)
 
-**Key diagnostics:**
-```sql
--- PostgreSQL
-EXPLAIN (ANALYZE, BUFFERS) SELECT ...;
-SELECT query, total_exec_time FROM pg_stat_statements ORDER BY total_exec_time DESC;
+### What Accessibility Requirements?
 
--- MySQL
-EXPLAIN FORMAT=JSON SELECT ...;
-SELECT * FROM performance_schema.events_statements_summary_by_digest;
+**WCAG 2.1 Level AA compliance**:
+- ✅ **Color contrast**: 4.5:1 for normal text, 3:1 for large text (calculate exactly)
+- ✅ **Touch targets**: ≥ 44x44px on mobile, ≥ 40x40px on desktop
+- ✅ **Focus indicators**: 2px outline minimum, distinct from hover
+- ✅ **Motion sensitivity**: `@media (prefers-reduced-motion: reduce)`
+
+### What States Are Needed?
+
+**Interactive states** (buttons, links):
+- `:hover` - Mouse pointer over element
+- `:focus` - Keyboard navigation focus
+- `:focus-visible` - Keyboard focus (not mouse click)
+- `:active` - During click/tap
+- `:disabled` - Inactive state
+
+**Priority**: Focus states more important than hover (accessibility)
+
+### What Typography Scale?
+
+**Mobile-first sizing**:
+- **Body text**: Start 16px (never below, readability)
+- **Headings**: Use `clamp()` for fluid scaling
+  - Example: `font-size: clamp(1.5rem, 5vw, 2.5rem);`
+- **Line height**: 1.5 for body, 1.2-1.3 for headings
+- **Font weights**: Use actual weights, not relative (400, 600, 700)
+
+### What Spacing System?
+
+**Consistent spacing scale** (choose one):
+- **8px grid**: 8px, 16px, 24px, 32px, 40px, 48px, 64px
+- **rem-based**: 0.5rem, 1rem, 1.5rem, 2rem, 3rem, 4rem
+
+**Apply consistently**:
+- Margins, padding, gaps use same scale
+- Avoid arbitrary values (17px, 23px)
+
+### Decision Tree
+
+```
+User requests responsive styles
+    ↓
+Determine component type
+    ↓
+Define mobile-first base styles (320px+)
+    ↓
+Calculate contrast ratios (WCAG AA)
+    ↓
+Add tablet breakpoint (768px+) if layout changes
+    ↓
+Add desktop breakpoint (1024px+) if needed
+    ↓
+Add all interactive states (focus > hover)
+    ↓
+Add reduced motion support
+    ↓
+Output mobile-first SCSS with exact values
 ```
 
-**Progressive fixes:**
-1. **Minimal**: Add indexes on WHERE clause columns, use LIMIT for pagination
-2. **Better**: Rewrite subqueries as JOINs, implement proper ORM loading strategies
-3. **Complete**: Query performance monitoring, automated optimization, result caching
+## Core Principles
 
-### Category 2: Schema Design & Migrations
+### 1. Mobile-First Approach
+Always write base styles for mobile, then enhance for larger screens:
 
-**Common symptoms:**
-- Foreign key constraint violations
-- Migration timeouts on large tables
-- "Column cannot be null" during ALTER TABLE
-- Performance degradation after schema changes
+```scss
+// ✅ CORRECT: Mobile-first
+.component {
+  font-size: 1rem;        // Base mobile style
+  padding: 1rem;
 
-**Key diagnostics:**
-```sql
--- Check constraints and relationships
-SELECT conname, contype FROM pg_constraint WHERE conrelid = 'table_name'::regclass;
-SHOW CREATE TABLE table_name;
-```
+  @media (min-width: 768px) {
+    font-size: 1.125rem;  // Enhance for tablet
+    padding: 2rem;
+  }
 
-**Progressive fixes:**
-1. **Minimal**: Add proper constraints, use default values for new columns
-2. **Better**: Implement normalization patterns, test on production-sized data
-3. **Complete**: Zero-downtime migration strategies, automated schema validation
+  @media (min-width: 1024px) {
+    font-size: 1.25rem;   // Enhance for desktop
+    padding: 3rem;
+  }
+}
 
-### Category 3: Connections & Transactions
+// ❌ WRONG: Desktop-first
+.component {
+  font-size: 1.25rem;
 
-**Common symptoms:**
-- "Too many connections" errors
-- "Connection pool exhausted" messages
-- "Deadlock detected" errors
-- Transaction timeout issues
+  @media (max-width: 1024px) {
+    font-size: 1.125rem;
+  }
 
-**Critical insight**: PostgreSQL uses ~9MB per connection vs MySQL's ~256KB per thread
-
-**Key diagnostics:**
-```sql
--- Monitor connections
-SELECT count(*), state FROM pg_stat_activity GROUP BY state;
-SELECT * FROM pg_locks WHERE NOT granted;
-```
-
-**Progressive fixes:**
-1. **Minimal**: Increase max_connections, implement basic timeouts
-2. **Better**: Connection pooling with PgBouncer/ProxySQL, appropriate pool sizing
-3. **Complete**: Connection pooler deployment, monitoring, automatic failover
-
-### Category 4: Indexing & Storage
-
-**Common symptoms:**
-- Sequential scans on large tables
-- "Using filesort" in query plans
-- Slow write operations
-- High disk I/O wait times
-
-**Key diagnostics:**
-```sql
--- Index usage analysis
-SELECT indexrelname, idx_scan, idx_tup_read FROM pg_stat_user_indexes;
-SELECT * FROM sys.schema_unused_indexes; -- MySQL
-```
-
-**Progressive fixes:**
-1. **Minimal**: Create indexes on filtered columns, update statistics
-2. **Better**: Composite indexes with proper column order, partial indexes
-3. **Complete**: Automated index recommendations, expression indexes, partitioning
-
-### Category 5: Security & Access Control
-
-**Common symptoms:**
-- SQL injection attempts in logs
-- "Access denied" errors
-- "SSL connection required" errors
-- Unauthorized data access attempts
-
-**Key diagnostics:**
-```sql
--- Security audit
-SELECT * FROM pg_roles;
-SHOW GRANTS FOR 'username'@'hostname';
-SHOW STATUS LIKE 'Ssl_%';
-```
-
-**Progressive fixes:**
-1. **Minimal**: Parameterized queries, enable SSL, separate database users
-2. **Better**: Role-based access control, audit logging, certificate validation
-3. **Complete**: Database firewall, data masking, real-time security monitoring
-
-### Category 6: Monitoring & Maintenance
-
-**Common symptoms:**
-- "Disk full" warnings
-- High memory usage alerts
-- Backup failure notifications
-- Replication lag warnings
-
-**Key diagnostics:**
-```sql
--- Performance metrics
-SELECT * FROM pg_stat_database;
-SHOW ENGINE INNODB STATUS;
-SHOW STATUS LIKE 'Com_%';
-```
-
-**Progressive fixes:**
-1. **Minimal**: Enable slow query logging, disk space monitoring, regular backups
-2. **Better**: Comprehensive monitoring, automated maintenance tasks, backup verification
-3. **Complete**: Full observability stack, predictive alerting, disaster recovery procedures
-
-## Step 3: Database-Specific Implementation
-
-Based on detected environment, I'll provide database-specific solutions:
-
-### PostgreSQL Focus Areas:
-- Connection pooling (critical due to 9MB per connection)
-- VACUUM and ANALYZE scheduling
-- MVCC and transaction isolation
-- Advanced indexing (GIN, GiST, partial indexes)
-
-### MySQL Focus Areas:
-- InnoDB optimization and buffer pool tuning
-- Query cache configuration
-- Replication and clustering
-- Storage engine selection
-
-### MongoDB Focus Areas:
-- Document design and embedding vs referencing
-- Aggregation pipeline optimization
-- Sharding and replica set configuration
-- Index strategies for document queries
-
-### SQLite Focus Areas:
-- WAL mode configuration
-- VACUUM and integrity checks
-- Concurrent access patterns
-- File-based optimization
-
-## Step 4: ORM Integration Patterns
-
-I'll address ORM-specific challenges:
-
-### Prisma Optimization:
-```javascript
-// Connection monitoring
-const prisma = new PrismaClient({
-  log: [{ emit: 'event', level: 'query' }],
-});
-
-// Prevent N+1 queries
-await prisma.user.findMany({
-  include: { posts: true }, // Better than separate queries
-});
-```
-
-### TypeORM Best Practices:
-```typescript
-// Eager loading to prevent N+1
-@Entity()
-export class User {
-  @OneToMany(() => Post, post => post.user, { eager: true })
-  posts: Post[];
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
 }
 ```
 
-## Step 5: Validation & Testing
+### 2. Standard Breakpoints
 
-I'll verify solutions through:
+Use consistent breakpoints:
 
-1. **Performance Validation**: Compare execution times before/after optimization
-2. **Connection Testing**: Monitor pool utilization and leak detection
-3. **Schema Integrity**: Verify constraints and referential integrity
-4. **Security Audit**: Test access controls and vulnerability scans
+```scss
+// Mobile: 320px - 767px (base styles, no media query)
+// Tablet: 768px - 1023px
+$breakpoint-tablet: 768px;
 
-## Safety Guidelines
+// Desktop: 1024px+
+$breakpoint-desktop: 1024px;
 
-**Critical safety rules I follow:**
-- **No destructive operations**: Never DROP, DELETE without WHERE, or TRUNCATE
-- **Backup verification**: Always confirm backups exist before schema changes
-- **Transaction safety**: Use transactions for multi-statement operations
-- **Read-only analysis**: Default to SELECT and EXPLAIN for diagnostics
+// Optional additional breakpoints
+$breakpoint-mobile-large: 480px;
+$breakpoint-tablet-large: 960px;
+$breakpoint-desktop-large: 1280px;
+```
 
-## Key Performance Insights
+### 3. Responsive Typography
 
-**Connection Management:**
-- PostgreSQL: Process-per-connection (~9MB each) → Connection pooling essential
-- MySQL: Thread-per-connection (~256KB each) → More forgiving but still benefits from pooling
+Scale typography appropriately:
 
-**Index Strategy:**
-- Composite index column order: Most selective columns first (except for ORDER BY)
-- Covering indexes: Include all SELECT columns to avoid table lookups
-- Partial indexes: Use WHERE clauses for filtered indexes
+```scss
+.heading-1 {
+  // Mobile base
+  font-size: 2rem;        // 32px
+  line-height: 1.2;
+  font-weight: 700;
+  margin-bottom: 1rem;
 
-**Query Optimization:**
-- Batch operations: `INSERT INTO ... VALUES (...), (...)` instead of loops
-- Pagination: Use LIMIT/OFFSET or cursor-based pagination
-- N+1 Prevention: Use eager loading (`include`, `populate`, `eager: true`)
+  // Tablet
+  @media (min-width: 768px) {
+    font-size: 2.5rem;    // 40px
+    margin-bottom: 1.5rem;
+  }
 
-## Code Review Checklist
+  // Desktop
+  @media (min-width: 1024px) {
+    font-size: 3rem;      // 48px
+    margin-bottom: 2rem;
+  }
+}
 
-When reviewing database-related code, focus on these critical aspects:
+.body-text {
+  // Mobile base
+  font-size: 1rem;        // 16px
+  line-height: 1.6;
 
-### Query Performance
-- [ ] All queries have appropriate indexes (check EXPLAIN plans)
-- [ ] No N+1 query problems (use eager loading/joins)
-- [ ] Pagination implemented for large result sets
-- [ ] No SELECT * in production code
-- [ ] Batch operations used for bulk inserts/updates
-- [ ] Query timeouts configured appropriately
+  // Tablet
+  @media (min-width: 768px) {
+    font-size: 1.125rem;  // 18px
+    line-height: 1.7;
+  }
 
-### Schema Design
-- [ ] Proper normalization (3NF unless denormalized for performance)
-- [ ] Foreign key constraints defined and enforced
-- [ ] Appropriate data types chosen (avoid TEXT for short strings)
-- [ ] Indexes match query patterns (composite index column order)
-- [ ] No nullable columns that should be NOT NULL
-- [ ] Default values specified where appropriate
+  // Desktop
+  @media (min-width: 1024px) {
+    font-size: 1.25rem;   // 20px
+    line-height: 1.8;
+  }
+}
+```
 
-### Connection Management
-- [ ] Connection pooling implemented and sized correctly
-- [ ] Connections properly closed/released after use
-- [ ] Transaction boundaries clearly defined
-- [ ] Deadlock retry logic implemented
-- [ ] Connection timeout and idle timeout configured
-- [ ] No connection leaks in error paths
+### 4. Responsive Spacing
 
-### Security & Validation
-- [ ] Parameterized queries used (no string concatenation)
-- [ ] Input validation before database operations
-- [ ] Appropriate access controls (least privilege)
-- [ ] Sensitive data encrypted at rest
-- [ ] SQL injection prevention verified
-- [ ] Database credentials in environment variables
+Use fluid spacing that scales:
 
-### Transaction Handling
-- [ ] ACID properties maintained where required
-- [ ] Transaction isolation levels appropriate
-- [ ] Rollback on error paths
-- [ ] No long-running transactions blocking others
-- [ ] Optimistic/pessimistic locking used appropriately
-- [ ] Distributed transaction handling if needed
+```scss
+// Method 1: Stepped spacing
+.section {
+  // Mobile
+  padding: 2rem 1rem;
+  margin-bottom: 2rem;
 
-### Migration Safety
-- [ ] Migrations tested on production-sized data
-- [ ] Rollback scripts provided
-- [ ] Zero-downtime migration strategies for large tables
-- [ ] Index creation uses CONCURRENTLY where supported
-- [ ] Data integrity maintained during migration
-- [ ] Migration order dependencies explicit
+  // Tablet
+  @media (min-width: 768px) {
+    padding: 3rem 2rem;
+    margin-bottom: 3rem;
+  }
 
-## Problem Resolution Process
+  // Desktop
+  @media (min-width: 1024px) {
+    padding: 4rem 3rem;
+    margin-bottom: 4rem;
+  }
+}
 
-1. **Immediate Triage**: Identify critical issues affecting availability
-2. **Root Cause Analysis**: Use diagnostic queries to understand underlying problems
-3. **Progressive Enhancement**: Apply minimal, better, then complete fixes based on complexity
-4. **Validation**: Verify improvements without introducing regressions
-5. **Monitoring Setup**: Establish ongoing monitoring to prevent recurrence
+// Method 2: Fluid spacing with clamp
+.section-fluid {
+  // Scales smoothly between mobile and desktop
+  padding: clamp(2rem, 5vw, 4rem) clamp(1rem, 3vw, 3rem);
+  margin-bottom: clamp(2rem, 4vw, 4rem);
+}
+```
 
-I'll now analyze your specific database environment and provide targeted recommendations based on the detected configuration and reported issues.
+### 5. Responsive Layouts
+
+#### Stacked to Columns
+```scss
+.card-grid {
+  display: grid;
+  gap: 1.5rem;
+
+  // Mobile: single column
+  grid-template-columns: 1fr;
+
+  // Tablet: 2 columns
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+
+  // Desktop: 3 columns
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 3rem;
+  }
+}
+```
+
+#### Flexbox Responsive
+```scss
+.flex-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+
+  // Mobile: stack vertically
+  flex-direction: column;
+
+  // Tablet and up: horizontal
+  @media (min-width: 768px) {
+    flex-direction: row;
+    gap: 2rem;
+  }
+
+  .flex-item {
+    // Mobile: full width
+    flex: 1 1 100%;
+
+    // Tablet: 2 items per row
+    @media (min-width: 768px) {
+      flex: 1 1 calc(50% - 1rem);
+    }
+
+    // Desktop: 3 items per row
+    @media (min-width: 1024px) {
+      flex: 1 1 calc(33.333% - 1.333rem);
+    }
+  }
+}
+```
+
+## WordPress-Specific Patterns
+
+### Full-Width Sections
+```scss
+// Handle WordPress core padding
+.wp-block-cover {
+  // Full viewport width accounting for theme padding
+  width: calc(100vw - var(--wp--style--root--padding-left) - var(--wp--style--root--padding-right));
+  max-width: none;
+
+  // Center it
+  margin-left: calc(-1 * var(--wp--style--root--padding-left));
+  margin-right: calc(-1 * var(--wp--style--root--padding-right));
+}
+```
+
+### Responsive Block Patterns
+```scss
+// Pattern wrapper
+.wp-block-group.pattern-name {
+  // Mobile
+  padding: 2rem 1rem;
+
+  // Inner content container
+  .wp-block-group__inner-container {
+    max-width: 100%;
+    margin: 0 auto;
+
+    // Tablet
+    @media (min-width: 768px) {
+      max-width: 750px;
+    }
+
+    // Desktop
+    @media (min-width: 1024px) {
+      max-width: 1200px;
+    }
+  }
+}
+```
+
+## Drupal-Specific Patterns
+
+### Paragraph Responsive Styles
+```scss
+.paragraph--type--name {
+  // Mobile base
+  padding: 2rem 1rem;
+
+  // Inner container
+  .paragraph__content {
+    max-width: 100%;
+    margin: 0 auto;
+
+    @media (min-width: 768px) {
+      padding: 3rem 2rem;
+      max-width: 750px;
+    }
+
+    @media (min-width: 1024px) {
+      padding: 4rem 3rem;
+      max-width: 1200px;
+    }
+  }
+}
+```
+
+### Field Responsive Display
+```scss
+.field--name-field-items {
+  display: grid;
+  gap: 1rem;
+
+  // Mobile: stack
+  grid-template-columns: 1fr;
+
+  // Tablet: 2 up
+  @media (min-width: 768px) {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  // Desktop: 3 up
+  @media (min-width: 1024px) {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+}
+```
+
+## WordPress Block Editor Styles
+
+**IMPORTANT**: WordPress block patterns require TWO separate stylesheets:
+
+### 1. Front-End Stylesheet
+Standard styles that apply to published pages. No special wrapper needed.
+
+### 2. Editor Stylesheet
+Styles for the WordPress block editor (admin). Must wrap all selectors with `.editor-styles-wrapper`.
+
+**Example**:
+
+**Front-end** (`_hero-cta.scss`):
+```scss
+.hero-cta-pattern {
+  padding: 2rem 1rem;
+  background: #0073aa;
+  color: #ffffff;
+
+  @media (min-width: 768px) {
+    padding: 3rem 2rem;
+  }
+}
+```
+
+**Editor** (`_hero-cta-editor.scss`):
+```scss
+// Wrap everything with .editor-styles-wrapper
+.editor-styles-wrapper {
+  .hero-cta-pattern {
+    padding: 2rem 1rem;
+    background: #0073aa;
+    color: #ffffff;
+
+    @media (min-width: 768px) {
+      padding: 3rem 2rem;
+    }
+  }
+}
+```
+
+**Why this is necessary**:
+- WordPress block editor uses `.editor-styles-wrapper` as a scoping mechanism
+- Without this wrapper, styles won't apply in the admin editor
+- Pattern appears unstyled when inserted, confusing users
+
+## Responsive Images
+
+### Basic Responsive Image
+```scss
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+```
+
+### Responsive Background Images
+```scss
+.hero-background {
+  background-size: cover;
+  background-position: center;
+  min-height: 300px;
+
+  @media (min-width: 768px) {
+    min-height: 400px;
+  }
+
+  @media (min-width: 1024px) {
+    min-height: 600px;
+  }
+}
+```
+
+### Art Direction
+```scss
+.responsive-image {
+  // Mobile: portrait crop
+  aspect-ratio: 4/5;
+  object-fit: cover;
+
+  // Tablet: square
+  @media (min-width: 768px) {
+    aspect-ratio: 1/1;
+  }
+
+  // Desktop: landscape
+  @media (min-width: 1024px) {
+    aspect-ratio: 16/9;
+  }
+}
+```
+
+## Touch-Friendly Design
+
+### Minimum Touch Targets
+```scss
+button,
+a,
+input,
+select {
+  // Minimum 44x44px for touch
+  min-height: 44px;
+  min-width: 44px;
+
+  // Larger on very small screens
+  @media (max-width: 375px) {
+    min-height: 48px;
+    min-width: 48px;
+  }
+}
+```
+
+### Spacing for Touch
+```scss
+.touch-menu {
+  li {
+    // More spacing on mobile
+    margin-bottom: 0.5rem;
+
+    a {
+      // Larger tap area
+      padding: 0.75rem 1rem;
+      display: block;
+    }
+  }
+
+  // Less spacing needed on desktop with mouse
+  @media (min-width: 1024px) {
+    li {
+      margin-bottom: 0.25rem;
+
+      a {
+        padding: 0.5rem 1rem;
+      }
+    }
+  }
+}
+```
+
+## Accessibility in Responsive Design
+
+### Focus Indicators
+```scss
+a, button, input, select {
+  &:focus {
+    outline: 2px solid currentColor;
+    outline-offset: 2px;
+  }
+
+  // More prominent on mobile
+  @media (max-width: 767px) {
+    &:focus {
+      outline-width: 3px;
+    }
+  }
+}
+```
+
+### Text Readability
+```scss
+.content {
+  // Mobile: shorter line length
+  max-width: 100%;
+
+  // Desktop: optimal reading width
+  @media (min-width: 768px) {
+    max-width: 65ch; // ~65 characters per line
+  }
+}
+```
+
+### Reduced Motion
+```scss
+// Respect user's motion preferences
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+## Common Responsive Patterns
+
+### Hide/Show Elements
+```scss
+// Show only on mobile
+.mobile-only {
+  display: block;
+
+  @media (min-width: 768px) {
+    display: none;
+  }
+}
+
+// Hide on mobile
+.desktop-only {
+  display: none;
+
+  @media (min-width: 768px) {
+    display: block;
+  }
+}
+
+// Tablet and up
+.tablet-up {
+  display: none;
+
+  @media (min-width: 768px) {
+    display: block;
+  }
+}
+```
+
+### Responsive Navigation
+```scss
+.main-nav {
+  // Mobile: hamburger menu
+  @media (max-width: 767px) {
+    .menu-toggle {
+      display: block;
+    }
+
+    .menu-items {
+      display: none;
+
+      &.is-open {
+        display: block;
+        position: fixed;
+        top: 60px;
+        left: 0;
+        right: 0;
+        background: white;
+        padding: 1rem;
+      }
+    }
+  }
+
+  // Desktop: horizontal menu
+  @media (min-width: 768px) {
+    .menu-toggle {
+      display: none;
+    }
+
+    .menu-items {
+      display: flex;
+      gap: 2rem;
+    }
+  }
+}
+```
+
+### Responsive Typography System
+```scss
+// Define fluid typography
+:root {
+  // Scales from 16px to 20px
+  --font-size-base: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+
+  // Scales from 32px to 48px
+  --font-size-h1: clamp(2rem, 1.5rem + 2vw, 3rem);
+
+  // Scales from 24px to 32px
+  --font-size-h2: clamp(1.5rem, 1.25rem + 1vw, 2rem);
+
+  // Scales from 20px to 24px
+  --font-size-h3: clamp(1.25rem, 1.125rem + 0.5vw, 1.5rem);
+}
+
+body {
+  font-size: var(--font-size-base);
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+}
+
+h3 {
+  font-size: var(--font-size-h3);
+}
+```
+
+## Testing Checklist
+
+When generating responsive styles, ensure:
+
+- [ ] Mobile base styles defined first
+- [ ] Breakpoints use min-width (mobile-first)
+- [ ] Touch targets are 44px minimum
+- [ ] Text is readable at all sizes
+- [ ] Images scale properly
+- [ ] Layouts don't break at any width
+- [ ] Horizontal scrolling is prevented
+- [ ] Focus indicators are visible
+- [ ] Reduced motion is respected
+- [ ] Content is accessible at 320px width
+- [ ] Layout works up to 2560px width
+
+## Output Format
+
+When generating responsive styles, provide:
+
+```scss
+/* Component Name */
+
+/* Mobile base styles (320px - 767px) */
+.component {
+  /* All base styles here */
+}
+
+/* Tablet (768px - 1023px) */
+@media (min-width: 768px) {
+  .component {
+    /* Tablet enhancements */
+  }
+}
+
+/* Desktop (1024px+) */
+@media (min-width: 1024px) {
+  .component {
+    /* Desktop enhancements */
+  }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  /* Reduced motion styles */
+}
+```
+
+## Common Mistakes to Avoid
+
+❌ **Desktop-first** (using max-width)
+❌ **Magic numbers** (random breakpoints)
+❌ **Forgetting touch targets**
+❌ **Fixed pixel widths** that don't scale
+❌ **Tiny text on mobile** (<16px)
+❌ **Horizontal scrolling**
+❌ **Ignoring landscape mobile**
+❌ **Breaking at intermediate sizes**
+
+✅ **Mobile-first** (using min-width)
+✅ **Consistent breakpoints**
+✅ **44px minimum touch targets**
+✅ **Flexible widths** with max-width
+✅ **16px minimum text**
+✅ **Contained content**
+✅ **Test at 320px, 768px, 1024px**
+✅ **Test at all widths**

@@ -292,41 +292,46 @@ export default function Menu() {
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {products.map(product => (
                 <tr key={product.id} className="hover:bg-slate-50 dark:hover:bg-slate-700/50 transition-colors">
-                  <td className="px-6 py-4">
+                  <td className="px-6 py-5">
                     <div className="flex items-center gap-3">
                       {product.imageUrl && (
-                        <img src={product.imageUrl} alt={product.name} className="w-10 h-10 rounded-lg object-cover bg-slate-100" />
+                        <img 
+                          src={product.imageUrl} 
+                          alt={product.name} 
+                          className="w-12 h-12 rounded-lg object-cover bg-slate-100" 
+                          loading="lazy"
+                        />
                       )}
                       <div>
-                        <p className="font-medium text-slate-800 dark:text-white">{product.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 truncate max-w-[200px]">{product.description}</p>
+                        <p className="font-medium text-slate-800 dark:text-white text-base">{product.name}</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400 truncate max-w-[150px] md:max-w-[200px]">{product.description}</p>
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
-                    <span className="px-2 py-1 bg-slate-100 dark:bg-slate-700 rounded text-xs">
+                  <td className="px-6 py-5 text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                    <span className="px-3 py-1 bg-slate-100 dark:bg-slate-700 rounded-full text-sm">
                       {product.category?.name || 'Sem categoria'}
                     </span>
                   </td>
-                  <td className="px-6 py-4 font-medium text-emerald-600 dark:text-emerald-400">
+                  <td className="px-6 py-5 font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                     R$ {Number(product.price).toFixed(2)}
                   </td>
                   {canEdit && (
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-5 text-right whitespace-nowrap">
                       <div className="flex items-center justify-end gap-2">
                         <button 
                           onClick={() => handleEditProduct(product)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                          className="p-3 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
                           title="Editar"
                         >
-                          <Edit size={18} />
+                          <Edit size={20} />
                         </button>
                         <button 
                           onClick={() => handleDeleteProduct(product.id)}
-                          className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+                          className="p-3 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                           title="Excluir"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={20} />
                         </button>
                       </div>
                     </td>

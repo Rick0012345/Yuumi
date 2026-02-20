@@ -13,7 +13,7 @@ export default function SettingsNavigation({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <nav className="flex space-x-2 border-b border-slate-200 dark:border-slate-700 mb-6 overflow-x-auto pb-1">
+    <nav className="flex space-x-2 border-b border-slate-200 dark:border-slate-700 mb-6 overflow-x-auto pb-1 scrollbar-hide -mx-4 px-4 md:mx-0 md:px-0">
       {tabs.map((tab) => {
         const Icon = tab.icon;
         return (
@@ -21,7 +21,7 @@ export default function SettingsNavigation({ activeTab, setActiveTab }) {
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={`
-              flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap
+              flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap min-h-[44px]
               ${activeTab === tab.id 
                 ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' 
                 : 'border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200'

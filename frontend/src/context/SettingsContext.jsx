@@ -9,6 +9,11 @@ export const SettingsProvider = ({ children }) => {
     language: 'pt-BR',
     fontSize: 'medium',
     theme: 'system',
+    restaurantLocation: {
+        lat: -23.55052,
+        lng: -46.633308,
+        name: 'Yummi Lanchonete'
+    },
     notifications: {
       emailNotifications: true,
       pushNotifications: true,

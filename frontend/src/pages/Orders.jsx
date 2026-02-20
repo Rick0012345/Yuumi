@@ -151,9 +151,9 @@ export default function Orders() {
                     className="hover:bg-slate-50/50 dark:hover:bg-slate-700/50 transition-colors cursor-pointer"
                     onClick={() => setSelectedOrder(order)}
                   >
-                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">#{order.id}</td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300">{order.customer_name || 'Anônimo'}</td>
-                    <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
+                    <td className="px-6 py-5 font-medium text-slate-900 dark:text-white whitespace-nowrap">#{order.id}</td>
+                    <td className="px-6 py-5 text-slate-600 dark:text-slate-300 whitespace-nowrap">{order.customer_name || 'Anônimo'}</td>
+                    <td className="px-6 py-5 text-slate-600 dark:text-slate-300 min-w-[200px]">
                       {order.items?.length > 0 ? (
                         <div className="flex flex-col gap-1">
                           {order.items.map((item, idx) => (
@@ -166,19 +166,19 @@ export default function Orders() {
                         <span className="text-slate-400 italic">Sem itens</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 font-medium text-emerald-600 dark:text-emerald-400">
+                    <td className="px-6 py-5 font-medium text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                       R$ {Number(order.total).toFixed(2)}
                     </td>
-                    <td className="px-6 py-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(order.status)}`}>
+                    <td className="px-6 py-5 whitespace-nowrap">
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-semibold border ${getStatusColor(order.status)}`}>
                         {getStatusLabel(order.status)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-6 py-5 text-sm whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                         {assigningOrder === order.id ? (
                              <select 
                                 autoFocus
-                                className="p-1 text-sm border rounded dark:bg-slate-700 dark:text-white"
+                                className="p-2 text-base border rounded dark:bg-slate-700 dark:text-white min-w-[150px]"
                                 onChange={(e) => assignDriver(order.id, e.target.value)}
                                 onBlur={() => setAssigningOrder(null)}
                                 defaultValue=""
@@ -189,61 +189,61 @@ export default function Orders() {
                                  ))}
                              </select>
                         ) : (
-                            <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 min-h-[44px]">
                                 <span className="text-slate-600 dark:text-slate-300">
                                     {order.driver_name || '-'}
                                 </span>
                                 {(order.status === 'READY' || order.status === 'PREPARING') && (
                                     <button 
                                         onClick={() => setAssigningOrder(order.id)}
-                                        className="text-indigo-500 hover:text-indigo-700 p-1"
+                                        className="text-indigo-500 hover:text-indigo-700 p-2 rounded-lg hover:bg-indigo-50 dark:hover:bg-indigo-900/30"
                                         title="Atribuir Entregador"
                                     >
-                                        <UserPlus size={16} />
+                                        <UserPlus size={20} />
                                     </button>
                                 )}
                             </div>
                         )}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
+                    <td className="px-6 py-5 text-sm text-slate-500 dark:text-slate-400 whitespace-nowrap">
                       {new Date(order.created_at).toLocaleString('pt-BR')}
                     </td>
-                    <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-6 py-5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <div className="flex items-center justify-end gap-2">
                         {order.status === 'PENDING' && (
                           <button 
                             onClick={() => updateStatus(order.id, 'PREPARING')}
-                            className="p-2 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg tooltip"
+                            className="p-3 text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg tooltip transition-colors"
                             title="Iniciar Preparo"
                           >
-                            <Clock size={18} />
+                            <Clock size={20} />
                           </button>
                         )}
                         {order.status === 'PREPARING' && (
                           <button 
                             onClick={() => updateStatus(order.id, 'READY')}
-                            className="p-2 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg"
+                            className="p-3 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 rounded-lg transition-colors"
                             title="Marcar como Pronto"
                           >
-                            <CheckCircle size={18} />
+                            <CheckCircle size={20} />
                           </button>
                         )}
                         {order.status === 'READY' && (
                           <button 
                             onClick={() => updateStatus(order.id, 'DELIVERING')}
-                            className="p-2 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg"
+                            className="p-3 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-900/30 rounded-lg transition-colors"
                             title="Enviar para Entrega"
                           >
-                            <Truck size={18} />
+                            <Truck size={20} />
                           </button>
                         )}
                         {order.status === 'DELIVERING' && (
                           <button 
                             onClick={() => updateStatus(order.id, 'COMPLETED')}
-                            className="p-2 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg"
+                            className="p-3 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 rounded-lg transition-colors"
                             title="Finalizar Pedido"
                           >
-                            <CheckCircle size={18} />
+                            <CheckCircle size={20} />
                           </button>
                         )}
                       </div>

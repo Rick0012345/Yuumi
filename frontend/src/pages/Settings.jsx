@@ -82,8 +82,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+    <div className="max-w-4xl mx-auto pb-6">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
         <div>
             <h1 className="text-2xl font-bold text-slate-800 dark:text-white">{t('settings')}</h1>
             <p className="text-slate-500 dark:text-slate-400">Gerencie suas preferências e configurações do sistema</p>
@@ -91,7 +91,7 @@ export default function SettingsPage() {
         <button
             onClick={handleSave}
             disabled={loading || saving}
-            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center justify-center gap-2 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed w-full md:w-auto min-h-[44px] font-medium"
         >
             {saving ? <Loader2 className="animate-spin" size={20} /> : <Save size={20} />}
             <span>{saving ? 'Salvando...' : 'Salvar Alterações'}</span>

@@ -107,15 +107,15 @@ export default function Dashboard() {
                     className="border-b border-slate-50 dark:border-slate-700/50 last:border-0 hover:bg-slate-50 dark:hover:bg-slate-700/50 cursor-pointer transition-colors"
                     onClick={() => setSelectedOrder(order)}
                   >
-                    <td className="py-3 text-slate-800 dark:text-slate-200">#{order.id}</td>
-                    <td className="py-3 text-slate-800 dark:text-slate-200">{order.customer_name || 'Cliente Anônimo'}</td>
-                    <td className="py-3 text-emerald-600 font-medium">R$ {Number(order.total).toFixed(2)}</td>
-                    <td className="py-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(order.status)}`}>
+                    <td className="py-4 px-2 text-slate-800 dark:text-slate-200">#{order.id}</td>
+                    <td className="py-4 px-2 text-slate-800 dark:text-slate-200">{order.customer_name || 'Cliente Anônimo'}</td>
+                    <td className="py-4 px-2 text-emerald-600 font-medium">R$ {Number(order.total).toFixed(2)}</td>
+                    <td className="py-4 px-2">
+                      <span className={`px-3 py-1.5 rounded-full text-xs font-medium border ${getStatusColor(order.status)} whitespace-nowrap`}>
                         {getStatusLabel(order.status)}
                       </span>
                     </td>
-                    <td className="py-3 text-slate-500 dark:text-slate-400 text-sm">
+                    <td className="py-4 px-2 text-slate-500 dark:text-slate-400 text-sm whitespace-nowrap">
                       {new Date(order.created_at).toLocaleString('pt-BR')}
                     </td>
                   </tr>
