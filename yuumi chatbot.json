@@ -12,8 +12,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -880,
-        704
+        -848,
+        464
       ],
       "credentials": {
         "postgres": {
@@ -31,8 +31,8 @@
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -672,
-        704
+        -640,
+        464
       ],
       "id": "f2fb7f2d-134f-4739-a6db-7c63358a4877",
       "name": "deletar memoria do chat",
@@ -75,30 +75,30 @@
         },
         "options": {}
       },
-      "id": "f2e9753d-864e-4a6a-8f18-0beaf9902b17",
+      "id": "c764e9b3-7a73-45cf-a66b-6d3fd9c1ed4d",
       "name": "Workflow Configuration1",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1024,
-        -144
+        -1504,
+        -224
       ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "INSERT INTO clientes_chatbot (phone_number, name, created_at) VALUES ($1, $2, NOW()) ON CONFLICT (phone_number) DO NOTHING RETURNING *",
+        "query": "INSERT INTO clientes_chatbot (phone_number, name, \"restaurantId\", created_at) VALUES ($1, $2, $3, NOW()) ON CONFLICT (phone_number) DO UPDATE SET \"restaurantId\" = EXCLUDED.\"restaurantId\" RETURNING *",
         "options": {
-          "queryReplacement": "={{ [$json.phoneNumber, $json.userName] }}"
+          "queryReplacement": "={{ [$('Extract Restaurant ID').item.json.phoneNumber, $('Extract Restaurant ID').item.json.userName, $('Extract Restaurant ID').item.json.restaurantId] }}"
         }
       },
-      "id": "656788e5-2a68-4505-a094-6eab2ce98d49",
+      "id": "ddcc4e08-35b4-453e-a004-797d901b836d",
       "name": "Check and Save User1",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -800,
-        -144
+        -320,
+        -240
       ],
       "credentials": {
         "postgres": {
@@ -120,13 +120,13 @@
           "temperature": 0.6
         }
       },
-      "id": "4e9845b1-8e95-4bd5-a6d9-640fa5db1a51",
+      "id": "e1bdab9e-648e-4f59-be01-d8ea358c7644",
       "name": "OpenAI Chat Model1",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -512,
-        128
+        -32,
+        32
       ],
       "credentials": {
         "openAiApi": {
@@ -141,13 +141,13 @@
         "sessionKey": "={{ $('Workflow Configuration1').item.json.phoneNumber }}",
         "contextWindowLength": 30
       },
-      "id": "bfb4654d-e376-4580-88c7-7d0b6649135b",
+      "id": "48d580c6-e14d-47ee-abc1-398b805f2b14",
       "name": "Postgres Chat Memory1",
       "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
       "typeVersion": 1.3,
       "position": [
-        -320,
-        128
+        160,
+        32
       ],
       "credentials": {
         "postgres": {
@@ -164,13 +164,13 @@
         "textBody": "={{ $json.output }}",
         "additionalFields": {}
       },
-      "id": "88ee5239-3d11-46ff-9f6e-ca829dac1f67",
+      "id": "ab03a930-0920-493e-bc64-8a49e7960041",
       "name": "Send WhatsApp Response1",
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        304,
-        -144
+        784,
+        -240
       ],
       "webhookId": "7777ae7b-27d2-4820-b44e-c1c32fd70b85",
       "retryOnFail": true,
@@ -200,7 +200,8 @@
             "adress": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('adress', ``, 'string') }}",
             "payment_method": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('payment_method', ``, 'string') }}",
             "observations": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('observations', ``, 'string') }}",
-            "customer_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('customer_name', ``, 'string') }}"
+            "customer_name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('customer_name', ``, 'string') }}",
+            "restaurantId": "={{ $('Extract Restaurant ID').item.json.restaurantId }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -266,34 +267,45 @@
               "display": true,
               "canBeUsedToMatch": true,
               "type": "string"
+            },
+            {
+              "id": "restaurantId",
+              "displayName": "restaurantId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "number"
             }
           ],
           "attemptToConvertTypes": false,
           "convertFieldsToString": false
         }
       },
-      "id": "5a7dc790-8035-4c99-87af-9af62eebcd52",
+      "id": "a67ddcfb-8054-4e6a-90bb-3f5f8e430e2d",
       "name": "Create Order Workflow Tool1",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        -160,
-        128
+        320,
+        32
       ]
     },
     {
       "parameters": {
         "operation": "executeQuery",
-        "query": "SELECT id, name, description, price, available, \"categoryId\" FROM \"Product\" WHERE available = true ORDER BY name",
-        "options": {}
+        "query": "SELECT id, name, description, price, available, \"categoryId\" FROM \"Product\" WHERE available = true AND \"restaurantId\" = $1 ORDER BY name",
+        "options": {
+          "queryReplacement": "={{ [$('Extract Restaurant ID').item.json.restaurantId] }}"
+        }
       },
-      "id": "04cd15b9-6f10-47d7-8bbd-9c7432d24b51",
+      "id": "91003012-4f5a-400e-acfd-4a89fa39b0c0",
       "name": "Get Products List",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -576,
-        -144
+        -96,
+        -240
       ],
       "credentials": {
         "postgres": {
@@ -309,13 +321,13 @@
         ],
         "options": {}
       },
-      "id": "39cdf563-8494-4c79-8327-988c48f61680",
+      "id": "e2a7a6dc-a4ab-4a58-b3cd-8b631e40cd5c",
       "name": "WhatsApp Trigger",
       "type": "n8n-nodes-base.whatsAppTrigger",
       "typeVersion": 1,
       "position": [
-        -1248,
-        -144
+        -1840,
+        -224
       ],
       "webhookId": "dd223e09-9439-4568-828e-539c4f19c07b",
       "retryOnFail": true,
@@ -334,13 +346,13 @@
           "systemMessage": "=[ROLE]\nVocê é Yuumi, atendente virtual da Yummi Lanchonete. Tom: amigável, direto, eficiente.\n\n[CONTEXT]\nCliente: {{userName}} ({{phoneNumber}})\nProdutos disponíveis: {{productsList}}\n\n[CRITICAL_RULES]\n1. SEMPRE confirme o pedido completo antes de chamar a tool\n2. NUNCA invente produtos não listados\n3. Items DEVE ser formato: [{\"productId\": ID, \"quantity\": QTD, \"price\": PRECO}]\n4. Se cliente pedir \"2 x-tudo\", pergunte: \"X-Tudo é o ID 5, correto?\"\n\n[WORKFLOW]\n1. Saudação (apenas 1ª mensagem)\n2. Coletar itens → validar IDs existentes\n3. Calcular total (use calculator tool se necessário)\n4. Coletar endereço + pagamento\n5. CONFIRMAÇÃO EXPLÍCITA: \"Posso confirmar seu pedido de R$XX?\"\n6. APÓS confirmação, chamar Create Order Workflow Tool1\n\n[EXEMPLO DE CONFIRMAÇÃO BEM SUCEDIDA]\nUsuário: \"Quero 2 burgers e 1 refrigerante\"\nYuumi: \"Encontrei: Burger Clássico (ID:1) R$25 e Refrigerante Cola (ID:5) R$8. Total R$58. Confirma?\"\nUsuário: \"Sim\"\nYuumi: [CHAMA_TOOL com items: [{\"productId\":1,\"quantity\":2,\"price\":25}, {\"productId\":5,\"quantity\":1,\"price\":8}]]"
         }
       },
-      "id": "e2595fd1-dea1-48a1-972a-bbf9d20f0451",
+      "id": "8f0d9477-de1f-451e-9b8d-b7bb8dfd9dcf",
       "name": "AI Agent1",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        -144,
-        -144
+        336,
+        -240
       ],
       "retryOnFail": true
     },
@@ -352,10 +364,10 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        -368,
-        -144
+        112,
+        -240
       ],
-      "id": "df5548a0-25f0-400b-8809-66c2054e570c",
+      "id": "c73ab2aa-303d-494c-b5ad-4ec1507d3e89",
       "name": "Aggregate"
     },
     {
@@ -363,11 +375,128 @@
       "type": "@n8n/n8n-nodes-langchain.toolCalculator",
       "typeVersion": 1,
       "position": [
-        80,
-        128
+        560,
+        32
       ],
-      "id": "e0ae61b7-4ad5-48d5-9919-ad04693545e5",
+      "id": "050db142-60c5-4dd6-a44b-3b21673462cc",
       "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT id, phone_id, token_meta, status_stripe FROM \"Restaurant\" WHERE phone_id = $1 LIMIT 1",
+        "options": {
+          "queryReplacement": "={{ $('WhatsApp Trigger').item.json.metadata.phone_number_id }}"
+        }
+      },
+      "id": "7ff302ba-987e-47f5-b356-a307e4d6f6b9",
+      "name": "Lookup Restaurant by Phone ID",
+      "type": "n8n-nodes-base.postgres",
+      "typeVersion": 2.6,
+      "position": [
+        -1200,
+        -224
+      ],
+      "alwaysOutputData": false,
+      "credentials": {
+        "postgres": {
+          "id": "sxrobEv3HSx7awYO",
+          "name": "Postgres account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "id-1",
+              "leftValue": "={{ $json.id }}",
+              "operator": {
+                "type": "string",
+                "operation": "exists"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "id": "dbb979de-d6a5-4143-bba2-26c7e18bd718",
+      "name": "Restaurant Found?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -976,
+        -224
+      ]
+    },
+    {
+      "parameters": {
+        "errorMessage": "Restaurant not found for this WhatsApp phone_id. Please configure the Restaurant in the database first."
+      },
+      "id": "09618ed5-b956-4d9a-b6d8-63e33aa731a9",
+      "name": "Stop - Restaurant Not Found",
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        -672,
+        48
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "restaurantId",
+              "value": "={{ $json.id }}",
+              "type": "number"
+            },
+            {
+              "id": "id-2",
+              "name": "phoneNumber",
+              "value": "={{ $('Workflow Configuration1').item.json.phoneNumber }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "userName",
+              "value": "={{ $('Workflow Configuration1').item.json.userName }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "messageText",
+              "value": "={{ $('Workflow Configuration1').item.json.messageText }}",
+              "type": "string"
+            },
+            {
+              "id": "id-5",
+              "name": "timestamp",
+              "value": "={{ $('Workflow Configuration1').item.json.timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ba7abc7e-761d-426a-8ad3-7138e5d44f7f",
+      "name": "Extract Restaurant ID",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -640,
+        -240
+      ]
     }
   ],
   "pinData": {
@@ -390,10 +519,10 @@
           "messages": [
             {
               "from": "5521984870401",
-              "id": "wamid.HBgNNTUyMTk4NDg3MDQwMRUCABIYIEFDMDA3MUQ3QTk3NEMyRDVGMDRBNEY0Mjk0NUIzNjg4AA==",
-              "timestamp": "1771020499",
+              "id": "wamid.HBgNNTUyMTk4NDg3MDQwMRUCABIYFjNFQjAwNTc1QUQ2QTNBOThCODdGMkIA",
+              "timestamp": "1771650376",
               "text": {
-                "body": "sim"
+                "body": "o que tem no cardapio hj?"
               },
               "type": "text"
             }
@@ -408,7 +537,7 @@
       "main": [
         [
           {
-            "node": "Check and Save User1",
+            "node": "Lookup Restaurant by Phone ID",
             "type": "main",
             "index": 0
           }
@@ -513,6 +642,46 @@
           }
         ]
       ]
+    },
+    "Lookup Restaurant by Phone ID": {
+      "main": [
+        [
+          {
+            "node": "Restaurant Found?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restaurant Found?": {
+      "main": [
+        [
+          {
+            "node": "Extract Restaurant ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Stop - Restaurant Not Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Restaurant ID": {
+      "main": [
+        [
+          {
+            "node": "Check and Save User1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -521,7 +690,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "5cf3f5de-d1ca-4df6-b0cc-2df4888a50c6",
+  "versionId": "f8ee41d6-6eea-4e83-9cfb-28f2162b791f",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "2044af69e344f81c84b76e58ece76b8096dfa52fd7c7b82b6c6f31bcf7767523"

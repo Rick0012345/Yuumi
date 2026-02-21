@@ -103,7 +103,7 @@ export default function Layout() {
           </>
         )}
 
-        {(user?.role === 'ADMIN' || user?.role === 'DRIVER') && (
+        {user?.role === 'DRIVER' && (
           <div onClick={handleNavigation}>
             <SidebarItem icon={<Bike size={20} />} label={t('deliveryMode')} to="/entregador" active={location.pathname === '/entregador'} isOpen={!isCollapsed} />
           </div>
