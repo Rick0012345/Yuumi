@@ -2,7 +2,7 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { useSettings } from '../context/SettingsContext';
-import { LayoutDashboard, ShoppingBag, UtensilsCrossed, Users, Settings, LogOut, Menu, Moon, Sun, Map, Bike } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, UtensilsCrossed, Users, Settings, LogOut, Menu, Moon, Sun, Map, Bike, Store } from 'lucide-react';
 import { useState } from 'react';
 
 const SidebarItem = ({ icon, label, to, active, isOpen }) => (
@@ -41,6 +41,7 @@ export default function Layout() {
       case '/usuarios': return t('users');
       case '/mapa-entregadores': return t('deliveryMap');
       case '/entregador': return t('deliveryMode');
+      case '/restaurantes': return 'Restaurantes';
       case '/config': return t('settings');
       default: return 'Yummi';
     }
@@ -66,23 +67,39 @@ export default function Layout() {
 
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto overflow-x-hidden">
         <div onClick={handleNavigation}>
-          <SidebarItem icon={<LayoutDashboard size={20} />} label={t('dashboard')} to="/" active={location.pathname === '/'} isOpen={!isCollapsed} />
+          <SidebarItem icon={<LayoutDashboard size={20} />} label={user?.role === 'ADMIN' ? 'SaaS Dashboard' : t('dashboard')} to="/" active={location.pathname === '/'} isOpen={!isCollapsed} />
         </div>
-        <div onClick={handleNavigation}>
-          <SidebarItem icon={<ShoppingBag size={20} />} label={t('orders')} to="/pedidos" active={location.pathname === '/pedidos'} isOpen={!isCollapsed} />
-        </div>
-        <div onClick={handleNavigation}>
-          <SidebarItem icon={<UtensilsCrossed size={20} />} label={t('menu')} to="/cardapio" active={location.pathname === '/cardapio'} isOpen={!isCollapsed} />
-        </div>
+
+        {/* Itens visíveis apenas para NÃO-ADMIN (Gerentes e Funcionários) */}
+        {user?.role !== 'ADMIN' && (
+          <>
+            <div onClick={handleNavigation}>
+              <SidebarItem icon={<ShoppingBag size={20} />} label={t('orders')} to="/pedidos" active={location.pathname === '/pedidos'} isOpen={!isCollapsed} />
+            </div>
+            <div onClick={handleNavigation}>
+              <SidebarItem icon={<UtensilsCrossed size={20} />} label={t('menu')} to="/cardapio" active={location.pathname === '/cardapio'} isOpen={!isCollapsed} />
+            </div>
+          </>
+        )}
         
+        {/* Gestão de Usuários: ADMIN (cria gerentes) e MANAGER (cria equipe) */}
         {(user?.role === 'ADMIN' || user?.role === 'MANAGER') && (
           <>
             <div onClick={handleNavigation}>
               <SidebarItem icon={<Users size={20} />} label={t('users')} to="/usuarios" active={location.pathname === '/usuarios'} isOpen={!isCollapsed} />
             </div>
-            <div onClick={handleNavigation}>
-              <SidebarItem icon={<Map size={20} />} label={t('deliveryMap')} to="/mapa-entregadores" active={location.pathname === '/mapa-entregadores'} isOpen={!isCollapsed} />
-            </div>
+            {/* Restaurantes: Apenas ADMIN */}
+            {user?.role === 'ADMIN' && (
+              <div onClick={handleNavigation}>
+                <SidebarItem icon={<Store size={20} />} label="Restaurantes" to="/restaurantes" active={location.pathname === '/restaurantes'} isOpen={!isCollapsed} />
+              </div>
+            )}
+            {/* Mapa: Apenas MANAGER */}
+            {user?.role === 'MANAGER' && (
+              <div onClick={handleNavigation}>
+                <SidebarItem icon={<Map size={20} />} label={t('deliveryMap')} to="/mapa-entregadores" active={location.pathname === '/mapa-entregadores'} isOpen={!isCollapsed} />
+              </div>
+            )}
           </>
         )}
 

@@ -92,8 +92,14 @@ app.post('/api/auth/login', async (req, res) => {
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword) return res.status(400).json({ error: 'Invalid password' });
 
-    const token = jwt.sign({ id: user.id, role: user.role, name: user.name }, JWT_SECRET, { expiresIn: '24h' });
-    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role } });
+    const token = jwt.sign({ 
+        id: user.id, 
+        role: user.role, 
+        name: user.name,
+        restaurantId: user.restaurantId 
+    }, JWT_SECRET, { expiresIn: '24h' });
+    
+    res.json({ token, user: { id: user.id, name: user.name, email: user.email, role: user.role, restaurantId: user.restaurantId } });
   } catch (e) {
       console.error(e);
       res.status(500).json({ error: 'Internal server error' });
@@ -110,6 +116,73 @@ app.get('/api/auth/me', authenticateToken, async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// --- RESTAURANT ROUTES ---
+
+app.get('/api/restaurants', authenticateToken, authorizeRole(['ADMIN']), async (req, res) => {
+  try {
+    const restaurants = await prisma.restaurant.findMany({
+      include: { _count: { select: { users: true, orders: true } } }
+    });
+    res.json(restaurants);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error fetching restaurants' });
+  }
+});
+
+app.post('/api/restaurants', authenticateToken, authorizeRole(['ADMIN']), async (req, res) => {
+  const { name, phone_id, token_meta, status_stripe, stripe_cust_id } = req.body;
+  
+  try {
+    const restaurant = await prisma.restaurant.create({
+      data: {
+        name,
+        phone_id,
+        token_meta,
+        status_stripe,
+        stripe_cust_id
+      }
+    });
+    res.json(restaurant);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: 'Error creating restaurant' });
+  }
+});
+
+app.put('/api/restaurants/:id', authenticateToken, authorizeRole(['ADMIN']), async (req, res) => {
+  const { id } = req.params;
+  const { name, phone_id, token_meta, status_stripe, stripe_cust_id } = req.body;
+  
+  try {
+    const restaurant = await prisma.restaurant.update({
+      where: { id: parseInt(id) },
+      data: {
+        name,
+        phone_id,
+        token_meta,
+        status_stripe,
+        stripe_cust_id
+      }
+    });
+    res.json(restaurant);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: 'Error updating restaurant' });
+  }
+});
+
+app.delete('/api/restaurants/:id', authenticateToken, authorizeRole(['ADMIN']), async (req, res) => {
+  const { id } = req.params;
+  try {
+    await prisma.restaurant.delete({ where: { id: parseInt(id) } });
+    res.json({ message: 'Restaurant deleted successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error: 'Error deleting restaurant' });
   }
 });
 
@@ -218,48 +291,140 @@ app.put('/api/settings', authenticateToken, async (req, res) => {
 // --- USER ROUTES ---
 
 app.get('/api/users', authenticateToken, authorizeRole(['ADMIN', 'MANAGER']), async (req, res) => {
-  const users = await prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true, createdAt: true }
-  });
-  res.json(users);
+  const where = req.user.role === 'ADMIN' ? {} : { restaurantId: req.user.restaurantId };
+  
+  try {
+    const users = await prisma.user.findMany({
+        where,
+        select: { 
+            id: true, 
+            name: true, 
+            email: true, 
+            role: true, 
+            createdAt: true,
+            restaurant: { select: { name: true } }
+        }
+    });
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Error fetching users' });
+  }
 });
 
 app.post('/api/users', authenticateToken, authorizeRole(['ADMIN', 'MANAGER']), async (req, res) => {
-   const { email, password, name, role } = req.body;
+   const { email, password, name, role, restaurantId } = req.body;
    
-   if (req.user.role === 'MANAGER' && role === 'ADMIN') {
-       return res.status(403).json({ error: 'Managers cannot create Admins' });
+   // Validation Rules
+   let finalRestaurantId = restaurantId;
+
+   if (req.user.role === 'ADMIN') {
+       if (role !== 'MANAGER') {
+           return res.status(403).json({ error: 'Admins can only create Managers' });
+       }
+       if (!restaurantId) {
+           return res.status(400).json({ error: 'Restaurant ID is required for Managers' });
+       }
+   }
+   
+   if (req.user.role === 'MANAGER') {
+       if (role === 'ADMIN' || role === 'MANAGER') {
+           return res.status(403).json({ error: 'Managers can only create Staff (Cooks/Drivers)' });
+       }
+       if (!req.user.restaurantId) {
+           return res.status(403).json({ error: 'Manager not associated with a restaurant' });
+       }
+       finalRestaurantId = req.user.restaurantId;
    }
 
    try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = await prisma.user.create({
-      data: { email, password: hashedPassword, name, role },
+      data: { 
+        email, 
+        password: hashedPassword, 
+        name, 
+        role,
+        restaurantId: finalRestaurantId ? parseInt(finalRestaurantId) : undefined
+      },
     });
     res.json(user);
   } catch (error) {
+    console.error(error);
     res.status(400).json({ error: 'Error creating user' });
   }
 });
 
 // --- MOCK DATA ROUTES (Para Dashboard/Pedidos) ---
 
-app.get('/api/dashboard/stats', authenticateToken, (req, res) => {
-    res.json({
-        totalOrders: 150,
-        totalRevenue: 4500.00,
-        pendingOrders: 12,
-        activeDrivers: 5
-    });
+app.get('/api/dashboard/saas-stats', authenticateToken, authorizeRole(['ADMIN']), async (req, res) => {
+    try {
+        const totalRestaurants = await prisma.restaurant.count();
+        const activeManagers = await prisma.user.count({ where: { role: 'MANAGER' } });
+        
+        // Mocked Financial Data
+        const monthlyRevenue = totalRestaurants * 150.00; // Ex: R$ 150 por lanchonete
+        const growth = 12; // 12% growth (mock)
+
+        res.json({
+            totalRestaurants,
+            activeManagers,
+            monthlyRevenue,
+            growth
+        });
+    } catch (error) {
+        console.error('Error fetching SaaS stats:', error);
+        res.status(500).json({ error: 'Error fetching SaaS stats' });
+    }
+});
+
+app.get('/api/dashboard/stats', authenticateToken, async (req, res) => {
+    // Apenas para MANAGER ou quem tem restaurantId
+    if (!req.user.restaurantId) {
+        return res.status(400).json({ error: 'User not associated with a restaurant' });
+    }
+
+    try {
+        const totalOrders = await prisma.order.count({ where: { restaurantId: req.user.restaurantId } });
+        
+        // Calculate Revenue
+        const orders = await prisma.order.findMany({ 
+            where: { restaurantId: req.user.restaurantId },
+            select: { total: true }
+        });
+        const totalRevenue = orders.reduce((acc, curr) => acc + curr.total, 0);
+
+        const pendingOrders = await prisma.order.count({ 
+            where: { restaurantId: req.user.restaurantId, status: 'PENDING' } 
+        });
+        
+        const activeDrivers = await prisma.user.count({ 
+            where: { restaurantId: req.user.restaurantId, role: 'DRIVER' } // Assumindo drivers vinculados
+        });
+
+        res.json({
+            totalOrders,
+            totalRevenue,
+            pendingOrders,
+            activeDrivers
+        });
+    } catch (error) {
+        console.error('Error fetching dashboard stats:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
 
 // --- ORDER ROUTES ---
 
 // --- CATEGORY ROUTES ---
 
-app.get('/api/categories', async (req, res) => {
+app.get('/api/categories', authenticateToken, async (req, res) => {
+  // Se for ADMIN, não tem cardápio para ver
+  if (req.user.role === 'ADMIN') return res.json([]);
+
   try {
     const categories = await prisma.category.findMany({
+      where: { restaurantId: req.user.restaurantId },
       include: { products: true }
     });
     res.json(categories);
@@ -268,11 +433,16 @@ app.get('/api/categories', async (req, res) => {
   }
 });
 
-app.post('/api/categories', authenticateToken, authorizeRole(['ADMIN', 'MANAGER']), async (req, res) => {
+app.post('/api/categories', authenticateToken, authorizeRole(['MANAGER']), async (req, res) => {
   const { name, description } = req.body;
+  
   try {
     const category = await prisma.category.create({
-      data: { name, description }
+      data: { 
+        name, 
+        description,
+        restaurantId: req.user.restaurantId
+      }
     });
     res.json(category);
   } catch (error) {
@@ -282,9 +452,12 @@ app.post('/api/categories', authenticateToken, authorizeRole(['ADMIN', 'MANAGER'
 
 // --- PRODUCT ROUTES ---
 
-app.get('/api/products', async (req, res) => {
+app.get('/api/products', authenticateToken, async (req, res) => {
+  if (req.user.role === 'ADMIN') return res.json([]);
+
   try {
     const products = await prisma.product.findMany({
+      where: { restaurantId: req.user.restaurantId },
       include: { category: true }
     });
     res.json(products);
@@ -293,7 +466,7 @@ app.get('/api/products', async (req, res) => {
   }
 });
 
-app.post('/api/products', authenticateToken, authorizeRole(['ADMIN', 'MANAGER']), async (req, res) => {
+app.post('/api/products', authenticateToken, authorizeRole(['MANAGER']), async (req, res) => {
   const { name, description, price, imageUrl, categoryId } = req.body;
   
   if (!categoryId) {
@@ -308,6 +481,7 @@ app.post('/api/products', authenticateToken, authorizeRole(['ADMIN', 'MANAGER'])
         price: parseFloat(price),
         imageUrl,
         categoryId: parseInt(categoryId),
+        restaurantId: req.user.restaurantId, // Always from token
         available: true
       }
     });
@@ -318,10 +492,16 @@ app.post('/api/products', authenticateToken, authorizeRole(['ADMIN', 'MANAGER'])
   }
 });
 
-app.put('/api/products/:id', authenticateToken, authorizeRole(['ADMIN', 'MANAGER']), async (req, res) => {
+app.put('/api/products/:id', authenticateToken, authorizeRole(['MANAGER']), async (req, res) => {
   const { id } = req.params;
   const { name, description, price, imageUrl, available, categoryId } = req.body;
   
+  // Verify ownership
+  const existingProduct = await prisma.product.findUnique({ where: { id: parseInt(id) } });
+  if (!existingProduct || existingProduct.restaurantId !== req.user.restaurantId) {
+      return res.status(403).json({ error: 'Not authorized to edit this product' });
+  }
+
   try {
     const product = await prisma.product.update({
       where: { id: parseInt(id) },
@@ -340,8 +520,14 @@ app.put('/api/products/:id', authenticateToken, authorizeRole(['ADMIN', 'MANAGER
   }
 });
 
-app.delete('/api/products/:id', authenticateToken, authorizeRole(['ADMIN', 'MANAGER']), async (req, res) => {
+app.delete('/api/products/:id', authenticateToken, authorizeRole(['MANAGER']), async (req, res) => {
   const { id } = req.params;
+  
+  // Verify ownership
+  const existingProduct = await prisma.product.findUnique({ where: { id: parseInt(id) } });
+  if (!existingProduct || existingProduct.restaurantId !== req.user.restaurantId) {
+      return res.status(403).json({ error: 'Not authorized to delete this product' });
+  }
   
   try {
     await prisma.product.delete({ where: { id: parseInt(id) } });
@@ -352,8 +538,16 @@ app.delete('/api/products/:id', authenticateToken, authorizeRole(['ADMIN', 'MANA
 });
 
 app.get('/api/orders', authenticateToken, async (req, res) => {
+  // Admin SaaS não vê pedidos
+  if (req.user.role === 'ADMIN') return res.json([]);
+  
+  if (!req.user.restaurantId) {
+      return res.status(400).json({ error: 'User not associated with a restaurant' });
+  }
+
   try {
     const orders = await prisma.order.findMany({
+      where: { restaurantId: req.user.restaurantId },
       include: {
         items: {
           include: {
@@ -459,10 +653,13 @@ app.get('/api/orders/my-deliveries', authenticateToken, authorizeRole(['DRIVER']
 
 app.post('/api/orders', async (req, res) => {
   // Public endpoint for creating orders (e.g. from a kiosk or app)
-  const { items, address, phone, customer_name, payment_method, observations } = req.body; // items: [{ productId, quantity }]
+  const { items, address, phone, customer_name, payment_method, observations, restaurantId } = req.body; // items: [{ productId, quantity }]
   
   if (!items || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({ error: 'Items are required' });
+  }
+  if (!restaurantId) {
+      return res.status(400).json({ error: 'Restaurant ID is required' });
   }
 
   try {
@@ -494,6 +691,7 @@ app.post('/api/orders', async (req, res) => {
         customer_name,
         payment_method,
         observations,
+        restaurantId: parseInt(restaurantId),
         items: {
           create: orderItemsData
         }

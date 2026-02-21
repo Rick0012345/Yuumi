@@ -9,6 +9,7 @@ import Users from './pages/Users';
 import DeliveryMode from './pages/DeliveryMode';
 import DeliveryMap from './pages/DeliveryMap';
 import SettingsPage from './pages/Settings';
+import Restaurants from './pages/Restaurants';
 
 function App() {
   return (
@@ -26,6 +27,10 @@ function App() {
         <Route element={<ProtectedRoute roles={['ADMIN', 'MANAGER']} />}>
           <Route path="/usuarios" element={<Users />} />
           <Route path="/mapa-entregadores" element={<DeliveryMap />} />
+        </Route>
+
+        <Route element={<ProtectedRoute roles={['ADMIN']} />}>
+          <Route path="/restaurantes" element={<Restaurants />} />
         </Route>
 
         <Route element={<ProtectedRoute roles={['DRIVER', 'ADMIN']} />}>

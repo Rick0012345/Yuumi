@@ -44,42 +44,6 @@
       }
     },
     {
-      "parameters": {},
-      "id": "8b97672d-cff7-4e5e-9f63-94c7f0da61a0",
-      "name": "Execute Workflow Trigger",
-      "type": "n8n-nodes-base.executeWorkflowTrigger",
-      "typeVersion": 1.1,
-      "position": [
-        -400,
-        736
-      ],
-      "disabled": true
-    },
-    {
-      "parameters": {
-        "operation": "executeQuery",
-        "query": "INSERT INTO \"Order\" (status, total, items, address, phone, payment_method, observations, \"createdAt\", \"updatedAt\") VALUES ('PENDING', $1, $2, $3, $4, $5, $6, NOW(), NOW()) RETURNING id, status, total, \"createdAt\"",
-        "options": {
-          "queryReplacement": "={{ $json.total }},={{ $json.items || '' }},={{ $json.address || '' }},={{ $json.phone || '' }},={{ $json.payment_method || '' }},={{ $json.observations || '' }}"
-        }
-      },
-      "id": "e04533a2-38eb-41c9-b87f-3e87d1ce0cdc",
-      "name": "Insert Order to Database",
-      "type": "n8n-nodes-base.postgres",
-      "typeVersion": 2.6,
-      "position": [
-        -128,
-        736
-      ],
-      "credentials": {
-        "postgres": {
-          "id": "sxrobEv3HSx7awYO",
-          "name": "Postgres account"
-        }
-      },
-      "disabled": true
-    },
-    {
       "parameters": {
         "assignments": {
           "assignments": [
@@ -367,7 +331,7 @@
         "promptType": "define",
         "text": "={{ $('Workflow Configuration1').item.json.messageText }}",
         "options": {
-          "systemMessage": "=[Role: Vendas WhatsApp]\n[Lang: pt-BR]\n[Tone: Amigável, educado, claro]\n\n[Dados do Cliente]\nNome: {{ $('Workflow Configuration1').item.json.userName }}\nTelefone: {{ $('Workflow Configuration1').item.json.phoneNumber }}\n\nIMPORTANTE: Ao criar o pedido, você DEVE passar o nome do cliente (customer_name) que já está salvo no banco de dados clientes_chatbot. Use o nome: {{ $('Workflow Configuration1').item.json.userName }}\n\n[Menu]\n{{ $('Get Products List').all().map(item => `[ID:${item.json.id}|${item.json.name}|R$${item.json.price}|${item.json.description}]`).join('\\n') }}\n\n[Flow]\n1. Se for a primeira mensagem da conversa: Saude pelo [Nome] e apresente o [Menu] com os preços.\n2. Nas mensagens seguintes: NÃO repita a saudação. Aja de forma natural, direta e continue o atendimento com base no histórico.\n3. Ajude a definir itens e quantidades.\n4. Calcule o 'total'.\n5. Colete endereço de entrega e método de pagamento.\n6. Pedido 100% confirmado pelo cliente? Call tool 'Create Order Workflow Tool1'."
+          "systemMessage": "=[ROLE]\nVocê é Yuumi, atendente virtual da Yummi Lanchonete. Tom: amigável, direto, eficiente.\n\n[CONTEXT]\nCliente: {{userName}} ({{phoneNumber}})\nProdutos disponíveis: {{productsList}}\n\n[CRITICAL_RULES]\n1. SEMPRE confirme o pedido completo antes de chamar a tool\n2. NUNCA invente produtos não listados\n3. Items DEVE ser formato: [{\"productId\": ID, \"quantity\": QTD, \"price\": PRECO}]\n4. Se cliente pedir \"2 x-tudo\", pergunte: \"X-Tudo é o ID 5, correto?\"\n\n[WORKFLOW]\n1. Saudação (apenas 1ª mensagem)\n2. Coletar itens → validar IDs existentes\n3. Calcular total (use calculator tool se necessário)\n4. Coletar endereço + pagamento\n5. CONFIRMAÇÃO EXPLÍCITA: \"Posso confirmar seu pedido de R$XX?\"\n6. APÓS confirmação, chamar Create Order Workflow Tool1\n\n[EXEMPLO DE CONFIRMAÇÃO BEM SUCEDIDA]\nUsuário: \"Quero 2 burgers e 1 refrigerante\"\nYuumi: \"Encontrei: Burger Clássico (ID:1) R$25 e Refrigerante Cola (ID:5) R$8. Total R$58. Confirma?\"\nUsuário: \"Sim\"\nYuumi: [CHAMA_TOOL com items: [{\"productId\":1,\"quantity\":2,\"price\":25}, {\"productId\":5,\"quantity\":1,\"price\":8}]]"
         }
       },
       "id": "e2595fd1-dea1-48a1-972a-bbf9d20f0451",
@@ -440,17 +404,6 @@
     ]
   },
   "connections": {
-    "Execute Workflow Trigger": {
-      "main": [
-        [
-          {
-            "node": "Insert Order to Database",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
     "Workflow Configuration1": {
       "main": [
         [
@@ -568,7 +521,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "f2281eb4-520d-4027-a67a-a13353d1692b",
+  "versionId": "5cf3f5de-d1ca-4df6-b0cc-2df4888a50c6",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "2044af69e344f81c84b76e58ece76b8096dfa52fd7c7b82b6c6f31bcf7767523"

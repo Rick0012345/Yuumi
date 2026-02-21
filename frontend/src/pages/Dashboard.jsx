@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import api from '../api';
-import { DollarSign, ShoppingBag, Truck, Users } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import { DollarSign, ShoppingBag, Truck, Users, Store, TrendingUp } from 'lucide-react';
 import OrderDetailsModal from '../components/OrderDetailsModal';
 import { getStatusColor, getStatusLabel } from '../utils/status';
 
@@ -17,9 +18,18 @@ const StatCard = ({ title, value, icon, color }) => (
 );
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [orders, setOrders] = useState([]);
   const [selectedOrder, setSelectedOrder] = useState(null);
-  const stats = useMemo(() => {
+  const [saasStats, setSaasStats] = useState({
+    totalRestaurants: 0,
+    activeManagers: 0,
+    monthlyRevenue: 0,
+    growth: 0
+  });
+
+  // Stats for Restaurant Manager/Staff
+  const restaurantStats = useMemo(() => {
     const total = orders.length;
     const revenue = orders.reduce((acc, order) => acc + (Number(order.total) || 0), 0);
     const pending = orders.filter(o => o.status === 'PENDING').length;
@@ -27,58 +37,105 @@ export default function Dashboard() {
       totalOrders: total,
       totalRevenue: revenue,
       pendingOrders: pending,
-      activeDrivers: 3
+      activeDrivers: 3 // Mocked for now
     };
   }, [orders]);
 
-  async function fetchOrders() {
+  async function fetchDashboardData() {
     try {
-      const response = await api.get('/orders');
-      setOrders(response.data || []);
+      if (user?.role === 'ADMIN') {
+        // Fetch SaaS Stats
+        const response = await api.get('/dashboard/saas-stats');
+        setSaasStats(response.data || {});
+      } else {
+        // Fetch Restaurant Orders
+        const response = await api.get('/orders');
+        setOrders(response.data || []);
+      }
     } catch (error) {
-      console.error('Erro ao buscar pedidos:', error);
+      console.error('Erro ao buscar dados do dashboard:', error);
     }
   }
 
   useEffect(() => {
     const initialFetch = setTimeout(() => {
-      fetchOrders();
+      fetchDashboardData();
     }, 0);
 
     const intervalId = setInterval(() => {
-      fetchOrders();
-    }, 5000);
+      fetchDashboardData();
+    }, 10000); // 10s refresh
 
     return () => {
       clearInterval(intervalId);
       clearTimeout(initialFetch);
     };
-  }, []);
+  }, [user]);
 
+  if (user?.role === 'ADMIN') {
+    return (
+      <div className="space-y-6">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">SaaS Overview</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCard 
+            title="Receita Mensal (SaaS)" 
+            value={`R$ ${Number(saasStats.monthlyRevenue).toFixed(2)}`} 
+            icon={<DollarSign className="text-white" size={24} />} 
+            color="bg-emerald-600" 
+          />
+          <StatCard 
+            title="Lanchonetes Ativas" 
+            value={saasStats.totalRestaurants} 
+            icon={<Store className="text-white" size={24} />} 
+            color="bg-blue-600" 
+          />
+          <StatCard 
+            title="Gerentes Cadastrados" 
+            value={saasStats.activeManagers} 
+            icon={<Users className="text-white" size={24} />} 
+            color="bg-indigo-600" 
+          />
+          <StatCard 
+            title="Crescimento Mensal" 
+            value={`${saasStats.growth}%`} 
+            icon={<TrendingUp className="text-white" size={24} />} 
+            color="bg-purple-600" 
+          />
+        </div>
+        
+        {/* Aqui poderia entrar um gráfico de crescimento ou lista de últimas lanchonetes cadastradas */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700">
+           <p className="text-slate-500 dark:text-slate-400">Bem-vindo ao painel administrativo do SaaS. Gerencie as lanchonetes e usuários através do menu lateral.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Restaurant Dashboard (Original)
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
           title="Faturamento Total" 
-          value={`R$ ${stats.totalRevenue.toFixed(2)}`} 
+          value={`R$ ${restaurantStats.totalRevenue.toFixed(2)}`} 
           icon={<DollarSign className="text-white" size={24} />} 
           color="bg-emerald-500" 
         />
         <StatCard 
           title="Total de Pedidos" 
-          value={stats.totalOrders} 
+          value={restaurantStats.totalOrders} 
           icon={<ShoppingBag className="text-white" size={24} />} 
           color="bg-indigo-500" 
         />
         <StatCard 
           title="Pedidos Pendentes" 
-          value={stats.pendingOrders} 
+          value={restaurantStats.pendingOrders} 
           icon={<Truck className="text-white" size={24} />} 
           color="bg-amber-500" 
         />
         <StatCard 
           title="Entregadores Ativos" 
-          value={stats.activeDrivers} 
+          value={restaurantStats.activeDrivers} 
           icon={<Users className="text-white" size={24} />} 
           color="bg-cyan-500" 
         />

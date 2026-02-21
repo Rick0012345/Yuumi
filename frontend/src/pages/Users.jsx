@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react';
 import api from '../api';
+import { useAuth } from '../context/AuthContext';
 import { Plus } from 'lucide-react';
 
 export default function Users() {
+  const { user } = useAuth();
   const [users, setUsers] = useState([]);
-  const [newUser, setNewUser] = useState({ name: '', email: '', password: '', role: 'COOK' });
+  const [restaurants, setRestaurants] = useState([]);
+  const [newUser, setNewUser] = useState({ 
+    name: '', 
+    email: '', 
+    password: '', 
+    role: user?.role === 'ADMIN' ? 'MANAGER' : 'COOK',
+    restaurantId: ''
+  });
   const [loading, setLoading] = useState(false);
 
   const fetchUsers = () => {
@@ -13,16 +22,34 @@ export default function Users() {
 
   useEffect(() => {
     fetchUsers();
-  }, []);
+    if (user?.role === 'ADMIN') {
+        api.get('/restaurants').then(res => setRestaurants(res.data)).catch(console.error);
+    }
+  }, [user]);
 
   const handleCreate = async (e) => {
     e.preventDefault();
     setLoading(true);
+    
+    // Validação extra para ADMIN
+    if (user?.role === 'ADMIN' && (!newUser.restaurantId || newUser.role !== 'MANAGER')) {
+        alert('Administradores só podem criar Gerentes vinculados a um Restaurante.');
+        setLoading(false);
+        return;
+    }
+
     try {
       await api.post('/users', newUser);
-      setNewUser({ name: '', email: '', password: '', role: 'COOK' });
+      setNewUser({ 
+          name: '', 
+          email: '', 
+          password: '', 
+          role: user?.role === 'ADMIN' ? 'MANAGER' : 'COOK',
+          restaurantId: ''
+      });
       fetchUsers();
-    } catch {
+    } catch (error) {
+      console.error(error);
       alert('Erro ao criar usuário');
     } finally {
       setLoading(false);
@@ -32,7 +59,9 @@ export default function Users() {
   return (
     <div className="space-y-6 pb-6">
       <div className="bg-white dark:bg-slate-800 p-4 md:p-6 rounded-xl shadow-sm border border-slate-100 dark:border-slate-700 transition-colors duration-300">
-        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">Cadastrar Novo Usuário</h3>
+        <h3 className="text-lg font-bold text-slate-800 dark:text-white mb-4">
+            {user?.role === 'ADMIN' ? 'Cadastrar Novo Gerente' : 'Cadastrar Novo Funcionário'}
+        </h3>
         <form onSubmit={handleCreate} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 items-end">
           <div>
             <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Nome</label>
@@ -67,19 +96,43 @@ export default function Users() {
               placeholder="••••••••"
             />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Função</label>
-            <select 
-              value={newUser.role} 
-              onChange={e => setNewUser({...newUser, role: e.target.value})} 
-              className="w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-colors text-base appearance-none"
-            >
-              <option value="COOK">Cozinheiro</option>
-              <option value="DRIVER">Motoboy</option>
-              <option value="MANAGER">Gerente</option>
-              <option value="ADMIN">Admin</option>
-            </select>
-          </div>
+          
+          {user?.role === 'ADMIN' ? (
+             <>
+               <div>
+                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Restaurante</label>
+                 <select 
+                   value={newUser.restaurantId} 
+                   onChange={e => setNewUser({...newUser, restaurantId: e.target.value})} 
+                   className="w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-colors text-base appearance-none"
+                   required
+                 >
+                   <option value="">Selecione...</option>
+                   {restaurants.map(r => (
+                       <option key={r.id} value={r.id}>{r.name}</option>
+                   ))}
+                 </select>
+               </div>
+               <div className="hidden">
+                   {/* Hidden Role Input for Admin - Always MANAGER */}
+                   <input type="hidden" value="MANAGER" />
+               </div>
+             </>
+          ) : (
+             <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Função</label>
+                <select 
+                  value={newUser.role} 
+                  onChange={e => setNewUser({...newUser, role: e.target.value})} 
+                  className="w-full px-4 py-3 border border-slate-200 dark:border-slate-600 rounded-lg bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-colors text-base appearance-none"
+                >
+                  <option value="COOK">Cozinheiro</option>
+                  <option value="DRIVER">Motoboy</option>
+                  <option value="MANAGER">Gerente</option>
+                </select>
+             </div>
+          )}
+
           <button 
             type="submit" 
             disabled={loading}
