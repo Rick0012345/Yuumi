@@ -62,7 +62,7 @@
             {
               "id": "id-3",
               "name": "messageText",
-              "value": "={{ $json.messages[0].text.body }}",
+              "value": "={{ $('WhatsApp Trigger').item.json.messages[0].text?.body || '' }}",
               "type": "string"
             },
             {
@@ -75,13 +75,13 @@
         },
         "options": {}
       },
-      "id": "c764e9b3-7a73-45cf-a66b-6d3fd9c1ed4d",
+      "id": "5984f72e-8f67-45b4-98ac-0bf8460baf8b",
       "name": "Workflow Configuration1",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -1504,
-        -224
+        -2528,
+        -304
       ]
     },
     {
@@ -92,13 +92,13 @@
           "queryReplacement": "={{ [$('Extract Restaurant ID').item.json.phoneNumber, $('Extract Restaurant ID').item.json.userName, $('Extract Restaurant ID').item.json.restaurantId] }}"
         }
       },
-      "id": "ddcc4e08-35b4-453e-a004-797d901b836d",
+      "id": "63533fd2-43c9-45c0-b108-bd154728b7ed",
       "name": "Check and Save User1",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -320,
-        -240
+        -528,
+        -416
       ],
       "credentials": {
         "postgres": {
@@ -120,13 +120,13 @@
           "temperature": 0.6
         }
       },
-      "id": "e1bdab9e-648e-4f59-be01-d8ea358c7644",
+      "id": "4d8c0bc7-10a8-4a7a-9460-6b10194c053b",
       "name": "OpenAI Chat Model1",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.3,
       "position": [
-        -32,
-        32
+        144,
+        -192
       ],
       "credentials": {
         "openAiApi": {
@@ -141,13 +141,13 @@
         "sessionKey": "={{ $('Workflow Configuration1').item.json.phoneNumber }}",
         "contextWindowLength": 30
       },
-      "id": "48d580c6-e14d-47ee-abc1-398b805f2b14",
+      "id": "a6c44d92-510c-4757-84df-5ce69f553d5c",
       "name": "Postgres Chat Memory1",
       "type": "@n8n/n8n-nodes-langchain.memoryPostgresChat",
       "typeVersion": 1.3,
       "position": [
-        160,
-        32
+        272,
+        -192
       ],
       "credentials": {
         "postgres": {
@@ -164,13 +164,13 @@
         "textBody": "={{ $json.output }}",
         "additionalFields": {}
       },
-      "id": "ab03a930-0920-493e-bc64-8a49e7960041",
+      "id": "2bebbe25-147d-47a4-9794-e4c15ab89ee7",
       "name": "Send WhatsApp Response1",
       "type": "n8n-nodes-base.whatsApp",
       "typeVersion": 1.1,
       "position": [
-        784,
-        -240
+        736,
+        -416
       ],
       "webhookId": "7777ae7b-27d2-4820-b44e-c1c32fd70b85",
       "retryOnFail": true,
@@ -282,13 +282,13 @@
           "convertFieldsToString": false
         }
       },
-      "id": "a67ddcfb-8054-4e6a-90bb-3f5f8e430e2d",
+      "id": "32da1932-82d5-41b5-9edd-5faacbafa0da",
       "name": "Create Order Workflow Tool1",
       "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
       "typeVersion": 2.2,
       "position": [
-        320,
-        32
+        400,
+        -192
       ]
     },
     {
@@ -299,13 +299,13 @@
           "queryReplacement": "={{ [$('Extract Restaurant ID').item.json.restaurantId] }}"
         }
       },
-      "id": "91003012-4f5a-400e-acfd-4a89fa39b0c0",
+      "id": "009f2d31-a2a3-436f-abc5-6f8f3a5406bd",
       "name": "Get Products List",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
-        -96,
-        -240
+        -304,
+        -416
       ],
       "credentials": {
         "postgres": {
@@ -321,13 +321,13 @@
         ],
         "options": {}
       },
-      "id": "e2a7a6dc-a4ab-4a58-b3cd-8b631e40cd5c",
+      "id": "f2fab4fe-2ce2-4187-85b7-9a16222a1274",
       "name": "WhatsApp Trigger",
       "type": "n8n-nodes-base.whatsAppTrigger",
       "typeVersion": 1,
       "position": [
-        -1840,
-        -224
+        -2768,
+        -304
       ],
       "webhookId": "dd223e09-9439-4568-828e-539c4f19c07b",
       "retryOnFail": true,
@@ -343,16 +343,16 @@
         "promptType": "define",
         "text": "={{ $('Workflow Configuration1').item.json.messageText }}",
         "options": {
-          "systemMessage": "=[ROLE]\nVocê é Yuumi, atendente virtual da Yummi Lanchonete. Tom: amigável, direto, eficiente.\n\n[CONTEXT]\nCliente: {{userName}} ({{phoneNumber}})\nProdutos disponíveis: {{productsList}}\n\n[CRITICAL_RULES]\n1. SEMPRE confirme o pedido completo antes de chamar a tool\n2. NUNCA invente produtos não listados\n3. Items DEVE ser formato: [{\"productId\": ID, \"quantity\": QTD, \"price\": PRECO}]\n4. Se cliente pedir \"2 x-tudo\", pergunte: \"X-Tudo é o ID 5, correto?\"\n\n[WORKFLOW]\n1. Saudação (apenas 1ª mensagem)\n2. Coletar itens → validar IDs existentes\n3. Calcular total (use calculator tool se necessário)\n4. Coletar endereço + pagamento\n5. CONFIRMAÇÃO EXPLÍCITA: \"Posso confirmar seu pedido de R$XX?\"\n6. APÓS confirmação, chamar Create Order Workflow Tool1\n\n[EXEMPLO DE CONFIRMAÇÃO BEM SUCEDIDA]\nUsuário: \"Quero 2 burgers e 1 refrigerante\"\nYuumi: \"Encontrei: Burger Clássico (ID:1) R$25 e Refrigerante Cola (ID:5) R$8. Total R$58. Confirma?\"\nUsuário: \"Sim\"\nYuumi: [CHAMA_TOOL com items: [{\"productId\":1,\"quantity\":2,\"price\":25}, {\"productId\":5,\"quantity\":1,\"price\":8}]]"
+          "systemMessage": "=[ROLE]\nVocê é Yuumi, atendente virtual da Yummi Lanchonete. Tom: amigável, direto, eficiente.\n\n[CONTEXT]\nCliente: {{ $('Workflow Configuration1').item.json.userName }} ({{ $('Workflow Configuration1').item.json.phoneNumber }})\nProdutos disponíveis:\n{{ $('Aggregate').item.json.data.filter(p => p.available).map(p => `- ID ${p.id}: ${p.name} (R$ ${p.price})`).join('\\n') }}\n\n[CRITICAL_RULES]\n1. SEMPRE confirme o pedido completo antes de chamar a tool\n2. NUNCA invente produtos não listados\n3. Items DEVE ser formato: [{\"productId\": ID, \"quantity\": QTD, \"price\": PRECO}]\n4. Se cliente pedir \"2 x-tudo\", pergunte: \"X-Tudo é o ID 5, correto?\"\n\n[WORKFLOW]\n1. Saudação (apenas 1ª mensagem)\n2. Coletar itens → validar IDs existentes\n3. Calcular total (use calculator tool se necessário)\n4. Coletar endereço + pagamento\n5. CONFIRMAÇÃO EXPLÍCITA: \"Posso confirmar seu pedido de R$XX?\"\n6. APÓS confirmação, chamar Create Order Workflow Tool1\n\n[EXEMPLO DE CONFIRMAÇÃO BEM SUCEDIDA]\nUsuário: \"Quero 2 burgers e 1 refrigerante\"\nYuumi: \"Encontrei: Burger Clássico (ID:1) R$25 e Refrigerante Cola (ID:5) R$8. Total R$58. Confirma?\"\nUsuário: \"Sim\"\nYuumi: [CHAMA_TOOL com items: [{\"productId\":1,\"quantity\":2,\"price\":25}, {\"productId\":5,\"quantity\":1,\"price\":8}]]"
         }
       },
-      "id": "8f0d9477-de1f-451e-9b8d-b7bb8dfd9dcf",
+      "id": "0c8dd4b1-914a-4073-919a-e28aff7edd0a",
       "name": "AI Agent1",
       "type": "@n8n/n8n-nodes-langchain.agent",
       "typeVersion": 3.1,
       "position": [
-        336,
-        -240
+        256,
+        -416
       ],
       "retryOnFail": true
     },
@@ -364,10 +364,10 @@
       "type": "n8n-nodes-base.aggregate",
       "typeVersion": 1,
       "position": [
-        112,
-        -240
+        -80,
+        -416
       ],
-      "id": "c73ab2aa-303d-494c-b5ad-4ec1507d3e89",
+      "id": "8f17091a-2eeb-4cf0-ba4c-9263c32948d4",
       "name": "Aggregate"
     },
     {
@@ -375,10 +375,10 @@
       "type": "@n8n/n8n-nodes-langchain.toolCalculator",
       "typeVersion": 1,
       "position": [
-        560,
-        32
+        528,
+        -192
       ],
-      "id": "050db142-60c5-4dd6-a44b-3b21673462cc",
+      "id": "91e5bc6d-df28-4e2c-a2be-c37a8d568bcd",
       "name": "Calculator"
     },
     {
@@ -389,13 +389,13 @@
           "queryReplacement": "={{ $('WhatsApp Trigger').item.json.metadata.phone_number_id }}"
         }
       },
-      "id": "7ff302ba-987e-47f5-b356-a307e4d6f6b9",
+      "id": "3ab62a0f-4174-441c-a330-01e0110330c8",
       "name": "Lookup Restaurant by Phone ID",
       "type": "n8n-nodes-base.postgres",
       "typeVersion": 2.6,
       "position": [
         -1200,
-        -224
+        -320
       ],
       "alwaysOutputData": false,
       "credentials": {
@@ -429,26 +429,26 @@
         "looseTypeValidation": true,
         "options": {}
       },
-      "id": "dbb979de-d6a5-4143-bba2-26c7e18bd718",
+      "id": "9db0678e-d434-4f79-820a-e6ab1c89a052",
       "name": "Restaurant Found?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.3,
       "position": [
         -976,
-        -224
+        -320
       ]
     },
     {
       "parameters": {
         "errorMessage": "Restaurant not found for this WhatsApp phone_id. Please configure the Restaurant in the database first."
       },
-      "id": "09618ed5-b956-4d9a-b6d8-63e33aa731a9",
+      "id": "2fea0155-093b-4984-9b05-6054ace8cb8b",
       "name": "Stop - Restaurant Not Found",
       "type": "n8n-nodes-base.stopAndError",
       "typeVersion": 1,
       "position": [
-        -672,
-        48
+        -752,
+        -224
       ]
     },
     {
@@ -489,14 +489,175 @@
         },
         "options": {}
       },
-      "id": "ba7abc7e-761d-426a-8ad3-7138e5d44f7f",
+      "id": "b6095372-ead2-4199-a6ff-3cf34a57909f",
       "name": "Extract Restaurant ID",
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        -640,
-        -240
+        -752,
+        -416
       ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('WhatsApp Trigger').item.json.messages[0].type }}",
+                    "rightValue": "text",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "94f66438-f1e8-4311-8f46-41f64ee16837"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Text Message"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('WhatsApp Trigger').item.json.messages[0].type }}",
+                    "rightValue": "audio",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "826eccc6-0e2a-4e6f-837b-3acba4ab12dc"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "Audio Message"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "5096730c-40c3-43fb-bd60-b8e11ccab281",
+      "name": "Route by Message Type",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -2304,
+        -304
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "operation": "transcribe",
+        "options": {
+          "language": "pt"
+        }
+      },
+      "id": "9ae60ad9-2663-4a13-a507-8f25dd17eb68",
+      "name": "Transcribe Audio to Text",
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 2.1,
+      "position": [
+        -1648,
+        -176
+      ],
+      "credentials": {
+        "openAiApi": {
+          "id": "svKHhCQfIv3yGCjt",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "id-1",
+              "name": "messageText",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            },
+            {
+              "id": "id-2",
+              "name": "phoneNumber",
+              "value": "={{ $('WhatsApp Trigger').item.json.contacts[0].wa_id }}",
+              "type": "string"
+            },
+            {
+              "id": "id-3",
+              "name": "userName",
+              "value": "={{ $('WhatsApp Trigger').item.json.contacts[0].profile?.name || 'Unknown' }}",
+              "type": "string"
+            },
+            {
+              "id": "id-4",
+              "name": "timestamp",
+              "value": "={{ $('WhatsApp Trigger').item.json.messages[0].timestamp }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fad36710-a022-4674-8f91-ac78ae8bedad",
+      "name": "Prepare Transcribed Text",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1440,
+        -176
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $('WhatsApp Trigger').item.json.messages[0].audio.url }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "82a2d5d6-9f4a-4fed-ab1f-a4ccca8d6b9b",
+      "name": "Download WhatsApp Audio",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -2080,
+        -176
+      ],
+      "credentials": {
+        "whatsAppApi": {
+          "id": "wvoYuCni8NhdJa3Z",
+          "name": "WhatsApp account"
+        },
+        "httpBearerAuth": {
+          "id": "7yZPzPW7ruCkPGrD",
+          "name": "Bearer Auth account"
+        }
+      }
     }
   ],
   "pinData": {
@@ -519,12 +680,16 @@
           "messages": [
             {
               "from": "5521984870401",
-              "id": "wamid.HBgNNTUyMTk4NDg3MDQwMRUCABIYFjNFQjAwNTc1QUQ2QTNBOThCODdGMkIA",
-              "timestamp": "1771650376",
-              "text": {
-                "body": "o que tem no cardapio hj?"
-              },
-              "type": "text"
+              "id": "wamid.HBgNNTUyMTk4NDg3MDQwMRUCABIYIEFDOUVGM0NCMTcwQ0ZFNkJGQjkzMkIzQjkyQjAwNTA4AA==",
+              "timestamp": "1771739797",
+              "type": "audio",
+              "audio": {
+                "mime_type": "audio/ogg; codecs=opus",
+                "sha256": "lHebNez3rRnOYY4LoO4WKusHgLkaXJGUG3+U4DtsOL0=",
+                "id": "926176830264294",
+                "url": "https://lookaside.fbsbx.com/whatsapp_business/attachments/?mid=926176830264294&source=webhook&ext=1771740098&hash=ARl7fTevmcgBgi0NS2I4XKWE-BiF5HAQgk996H7x0rrPQQ",
+                "voice": false
+              }
             }
           ],
           "field": "messages"
@@ -537,7 +702,7 @@
       "main": [
         [
           {
-            "node": "Lookup Restaurant by Phone ID",
+            "node": "Route by Message Type",
             "type": "main",
             "index": 0
           }
@@ -682,6 +847,57 @@
           }
         ]
       ]
+    },
+    "Route by Message Type": {
+      "main": [
+        [
+          {
+            "node": "Lookup Restaurant by Phone ID",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Download WhatsApp Audio",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe Audio to Text": {
+      "main": [
+        [
+          {
+            "node": "Prepare Transcribed Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Transcribed Text": {
+      "main": [
+        [
+          {
+            "node": "Lookup Restaurant by Phone ID",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download WhatsApp Audio": {
+      "main": [
+        [
+          {
+            "node": "Transcribe Audio to Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
   "active": false,
@@ -690,7 +906,7 @@
     "binaryMode": "separate",
     "availableInMCP": false
   },
-  "versionId": "f8ee41d6-6eea-4e83-9cfb-28f2162b791f",
+  "versionId": "58818778-74b8-46d3-8d77-50e3cbaae3be",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "2044af69e344f81c84b76e58ece76b8096dfa52fd7c7b82b6c6f31bcf7767523"
